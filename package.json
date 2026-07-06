@@ -1,0 +1,18 @@
+{
+  "name": "farout-sales-commission-reports",
+  "version": "1.0.0",
+  "description": "Sales & commission reports for Far Out Design inc, generated from live JobTread (Pave API) data.",
+  "type": "commonjs",
+  "bin": {
+    "farout-report": "generate-report.js"
+  },
+  "scripts": {
+    "report": "node generate-report.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
