@@ -10,6 +10,10 @@ function num(n, digits = 1) {
   const v = typeof n === 'number' ? n : 0;
   return v.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
+function hours(n) {
+  const v = typeof n === 'number' ? n : 0;
+  return `${v.toLocaleString('en-US', { maximumFractionDigits: 2 })} hrs`;
+}
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -78,10 +82,10 @@ function renderCsvFiles(report) {
 
   // 4. Technician bonus-hours detail.
   {
-    const headers = ['Month', 'JobNumber', 'Job', 'Technician', 'BidPersonHours', 'ActualHours', 'BonusHours', 'Multiplier', 'Wage', 'BonusPay'];
+    const headers = ['Month', 'JobNumber', 'Job', 'Technician', 'BidPersonHours', 'ActualHours', 'BonusHours', 'Multiplier', 'PayableBonusHours'];
     const rows = report.detail.bonus.map((d) => [
       `${report.year}-${String(d.month).padStart(2, '0')}`,
-      d.number, d.name, d.tech, d.bidPersonHours, d.actualHours, d.bonusHours, d.multiplier, d.wage, d.pay,
+      d.number, d.name, d.tech, d.bidPersonHours, d.actualHours, d.bonusHours, d.multiplier, d.payableHours,
     ]);
     files.push({ name: 'bonus-hours-detail.csv', content: toCsv(headers, rows) });
   }
@@ -100,7 +104,7 @@ function monthlyTable(report) {
   const pc = config.productionCommission;
   const head = `<tr><th>Month</th>${reps
     .map((r) => `<th class="num">${esc(r)}<br><span class="sub">paid rev</span></th>`)
-    .join('')}<th class="num">Sales comm.</th><th class="num">Prod. comm.</th><th class="num">Bonus</th></tr>`;
+    .join('')}<th class="num">Sales comm.</th><th class="num">Prod. comm.</th><th class="num">Bonus hrs</th></tr>`;
 
   const body = report.months
     .map((mo) => {
@@ -111,7 +115,7 @@ function monthlyTable(report) {
         mo.salesCommissionTotal ? money(mo.salesCommissionTotal) : '<span class="z">–</span>'
       }</td><td class="num">${
         mo.productionCommission ? money(mo.productionCommission) : '<span class="z">–</span>'
-      }</td><td class="num">${mo.bonusTotal ? money(mo.bonusTotal) : '<span class="z">–</span>'}</td></tr>`;
+      }</td><td class="num">${mo.bonusHoursTotal ? hours(mo.bonusHoursTotal) : '<span class="z">–</span>'}</td></tr>`;
     })
     .join('');
 
@@ -120,8 +124,8 @@ function monthlyTable(report) {
     .join('');
   const foot = `<tr class="total"><td>Year total</td>${totalRev}<td class="num">${money(
     report.grand.salesCommission
-  )}</td><td class="num">${money(report.grand.productionCommission)}</td><td class="num">${money(
-    report.grand.bonus
+  )}</td><td class="num">${money(report.grand.productionCommission)}</td><td class="num">${hours(
+    report.grand.bonusHours
   )}</td></tr>`;
 
   return `<table><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`;
@@ -148,17 +152,17 @@ function techBonusTable(report) {
   }
   const head = `<tr><th>Month</th>${report.techs.map((t) => `<th class="num">${esc(t)}</th>`).join('')}<th class="num">Total</th></tr>`;
   const body = report.months
-    .filter((mo) => mo.bonusTotal > 0)
+    .filter((mo) => mo.bonusHoursTotal > 0)
     .map((mo) => {
       const cells = report.techs
-        .map((t) => `<td class="num">${mo.bonusByTech[t] ? money(mo.bonusByTech[t]) : '<span class="z">–</span>'}</td>`)
+        .map((t) => `<td class="num">${mo.bonusHoursByTech[t] ? hours(mo.bonusHoursByTech[t]) : '<span class="z">–</span>'}</td>`)
         .join('');
-      return `<tr><td>${esc(mo.name)}</td>${cells}<td class="num">${money(mo.bonusTotal)}</td></tr>`;
+      return `<tr><td>${esc(mo.name)}</td>${cells}<td class="num">${hours(mo.bonusHoursTotal)}</td></tr>`;
     })
     .join('');
   const foot = `<tr class="total"><td>Year total</td>${report.techs
-    .map((t) => `<td class="num">${money(report.techTotals[t])}</td>`)
-    .join('')}<td class="num">${money(report.grand.bonus)}</td></tr>`;
+    .map((t) => `<td class="num">${hours(report.techTotals[t])}</td>`)
+    .join('')}<td class="num">${hours(report.grand.bonusHours)}</td></tr>`;
   return `<table><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`;
 }
 
@@ -188,8 +192,8 @@ function renderHtml(report) {
     `<b>Sales commission</b> is the actual amount on each job's "Salesman Commission" budget line, recognized in the month the job is marked <i>closed</i>. The policy cap (Ben ${'5% <$10k / 7% ≥$10k'}, Derek 5%) is shown for reference; lines over cap are flagged.`,
     `<b>Production commission</b> is ${pc.rate * 100}% for ${esc(pc.rep)}, computed on the ${
       pc.scope === 'own' ? `${esc(pc.rep)}'s` : 'total'
-    } price of jobs closed each month (paid out the following month).`,
-    `<b>Technician bonus</b> = unused labor hours (bid − clocked) on closed jobs, paid at ${config.bonusHours.multiplier}× when a job's bonus exceeds ${config.bonusHours.thresholdHours} hrs (otherwise ${config.bonusHours.baseMultiplier}×), times each technician's hourly wage.`,
+    } price of jobs that are closed <i>and fully paid</i> each month (paid out the following month).`,
+    `<b>Technician bonus hours</b> = unused labor hours (bid − clocked) on closed jobs, counted at ${config.bonusHours.multiplier}× when a job's bonus exceeds ${config.bonusHours.thresholdHours} hrs (otherwise ${config.bonusHours.baseMultiplier}×), split across the technicians who worked the job. These are <b>hours</b> — multiply by each technician's wage in payroll.`,
   ];
 
   return `<title>Far Out Design — Sales & Commission Report ${report.year}</title>
@@ -238,7 +242,7 @@ function renderHtml(report) {
     <div class="card"><div class="label">Paid revenue</div><div class="val">${money(report.grand.revenue)}</div></div>
     <div class="card"><div class="label">Sales commission</div><div class="val">${money(report.grand.salesCommission)}</div></div>
     <div class="card"><div class="label">Production commission</div><div class="val">${money(report.grand.productionCommission)}</div></div>
-    <div class="card"><div class="label">Technician bonus</div><div class="val">${money(report.grand.bonus)}</div></div>
+    <div class="card"><div class="label">Technician bonus hours</div><div class="val">${hours(report.grand.bonusHours)}</div></div>
   </div>
 
   ${overCapCount > 0 ? `<div class="alert">⚠ ${overCapCount} job${overCapCount === 1 ? '' : 's'} have a sales-commission line above the policy cap — see the detail table below.</div>` : ''}

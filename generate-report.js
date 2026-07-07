@@ -20,7 +20,13 @@ const fs = require('fs');
 const path = require('path');
 
 const config = require('./config');
-const { fetchJobs, fetchPaidInvoiceRevenue, fetchCommissionLines, fetchJobLaborAndTime } = require('./src/fetch');
+const {
+  fetchJobs,
+  fetchPaidInvoiceRevenue,
+  fetchCommissionLines,
+  fetchInvoiceTotalsByJob,
+  fetchJobLaborAndTime,
+} = require('./src/fetch');
 const { buildReport } = require('./src/compute');
 const { renderHtml, renderCsvFiles, money } = require('./src/render');
 
@@ -84,6 +90,12 @@ async function main() {
   const salesCommissionLines = await fetchCommissionLines(orgId, config.costCodes.salesCommission, opts);
   console.error(`    ${salesCommissionLines.length} salesman-commission lines`);
 
+  console.error('  • fetching invoice totals (to find fully-paid jobs)…');
+  const invoiceTotals = await fetchInvoiceTotalsByJob(orgId, opts);
+  const fullyPaidJobIds = new Set();
+  for (const [jobId, t] of invoiceTotals) if (t.fullyPaid) fullyPaidJobIds.add(jobId);
+  console.error(`    ${fullyPaidJobIds.size} fully-paid jobs`);
+
   // Jobs closed within the report year drive commission + bonus recognition.
   const closedJobIds = [];
   for (const job of jobs.values()) {
@@ -95,7 +107,7 @@ async function main() {
   const laborByJob = await fetchJobLaborAndTime(orgId, closedJobIds, opts);
 
   const report = buildReport(
-    { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob },
+    { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob, fullyPaidJobIds },
     config,
     year
   );
@@ -120,7 +132,7 @@ async function main() {
   console.log(`  Paid revenue:           ${money(report.grand.revenue)}`);
   console.log(`  Sales commission:       ${money(report.grand.salesCommission)}`);
   console.log(`  Production commission:  ${money(report.grand.productionCommission)}`);
-  console.log(`  Technician bonus:       ${money(report.grand.bonus)}`);
+  console.log(`  Technician bonus hours: ${report.grand.bonusHours} hrs`);
   console.log('');
   for (const rep of report.reps) {
     const t = report.repTotals[rep];

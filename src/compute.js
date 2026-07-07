@@ -78,8 +78,8 @@ function buildReport(data, cfg, year) {
       salesCommissionByRep: {},
       salesCommissionTotal: 0,
       productionCommission: 0, // attributed to cfg.productionCommission.rep
-      bonusByTech: {},
-      bonusTotal: 0,
+      bonusHoursByTech: {}, // payable bonus hours (multiplier already applied)
+      bonusHoursTotal: 0,
     });
   }
   const monthAt = (m) => months[m - 1];
@@ -129,8 +129,11 @@ function buildReport(data, cfg, year) {
     });
   }
 
-  // ---- Production commission (Derek): 2% of jobs closed in the month ------
+  // ---- Production commission (Derek): 2% of jobs closed AND fully paid ----
+  // Base = price of jobs that are closed (treated as completed) and fully paid,
+  // recognized in the month they closed. `fullyPaidJobIds` gates on payment.
   const pc = cfg.productionCommission;
+  const fullyPaidJobIds = data.fullyPaidJobIds || new Set();
   const productionDetail = [];
   if (pc && pc.rate) {
     repKeys.add(pc.rep);
@@ -140,6 +143,7 @@ function buildReport(data, cfg, year) {
       for (const job of jobs.values()) {
         const ym = recognitionMonth(job, tz);
         if (!ym || ym.year !== year || ym.month !== m) continue;
+        if (!fullyPaidJobIds.has(job.id)) continue; // must be paid (and completed)
         if (pc.scope === 'own' && job.rep !== pc.rep) continue;
         const price = typeof job.price === 'number' ? job.price : 0;
         base += price;
@@ -152,6 +156,9 @@ function buildReport(data, cfg, year) {
   }
 
   // ---- Technician bonus hours ---------------------------------------------
+  // Output is BONUS HOURS (with the multiplier applied), not dollars — payroll
+  // multiplies by each technician's wage. If a job's bonus exceeds the
+  // threshold, all of its bonus hours are paid at the multiplier.
   const bh = cfg.bonusHours;
   const bonusDetail = [];
   for (const [jobId, labor] of data.laborByJob) {
@@ -160,25 +167,25 @@ function buildReport(data, cfg, year) {
     const ym = recognitionMonth(job, tz);
     if (!ym || ym.year !== year) continue;
 
-    const bonusHours = labor.bidPersonHours - labor.actualHours;
-    if (!(bonusHours > 0)) continue;
+    const rawBonusHours = labor.bidPersonHours - labor.actualHours;
+    if (!(rawBonusHours > 0)) continue;
 
-    const multiplier = bonusHours > bh.thresholdHours ? bh.multiplier : bh.baseMultiplier;
+    const multiplier = rawBonusHours > bh.thresholdHours ? bh.multiplier : bh.baseMultiplier;
 
     // Distribute bonus hours across the techs who clocked time, by their share.
     let totalTechHours = 0;
     for (const t of labor.techs.values()) totalTechHours += t.hours;
-    if (totalTechHours <= 0) continue; // no clocked time -> unknown who/what wage
+    if (totalTechHours <= 0) continue; // no clocked time -> unknown who worked
 
     const mo = monthAt(ym.month);
     for (const [name, t] of labor.techs) {
       const share = t.hours / totalTechHours;
-      const techBonusHours = bonusHours * share;
-      const pay = round2(techBonusHours * multiplier * t.hourlyRate);
-      if (pay === 0) continue;
+      const rawShareHours = rawBonusHours * share;
+      const payableHours = round2(rawShareHours * multiplier);
+      if (payableHours === 0) continue;
       techKeys.add(name);
-      addTo(mo.bonusByTech, name, pay);
-      mo.bonusTotal += pay;
+      addTo(mo.bonusHoursByTech, name, payableHours);
+      mo.bonusHoursTotal += payableHours;
       bonusDetail.push({
         month: ym.month,
         jobId,
@@ -187,10 +194,9 @@ function buildReport(data, cfg, year) {
         tech: name,
         bidPersonHours: round2(labor.bidPersonHours),
         actualHours: round2(labor.actualHours),
-        bonusHours: round2(techBonusHours),
+        bonusHours: round2(rawShareHours),
         multiplier,
-        wage: round2(t.hourlyRate),
-        pay,
+        payableHours,
       });
     }
   }
@@ -219,10 +225,11 @@ function buildReport(data, cfg, year) {
     );
   }
 
+  // techTotals are payable bonus HOURS per technician.
   const techTotals = {};
   for (const tech of techs) techTotals[tech] = 0;
   for (const mo of months) {
-    for (const tech of techs) techTotals[tech] += mo.bonusByTech[tech] || 0;
+    for (const tech of techs) techTotals[tech] += mo.bonusHoursByTech[tech] || 0;
   }
   for (const tech of techs) techTotals[tech] = round2(techTotals[tech]);
 
@@ -235,18 +242,18 @@ function buildReport(data, cfg, year) {
       }
     }
     for (const tech of techs) {
-      if (mo.bonusByTech[tech] != null) mo.bonusByTech[tech] = round2(mo.bonusByTech[tech]);
+      if (mo.bonusHoursByTech[tech] != null) mo.bonusHoursByTech[tech] = round2(mo.bonusHoursByTech[tech]);
     }
     mo.revenueTotal = round2(mo.revenueTotal);
     mo.salesCommissionTotal = round2(mo.salesCommissionTotal);
-    mo.bonusTotal = round2(mo.bonusTotal);
+    mo.bonusHoursTotal = round2(mo.bonusHoursTotal);
   }
 
   const grand = {
     revenue: round2(months.reduce((s, m) => s + m.revenueTotal, 0)),
     salesCommission: round2(months.reduce((s, m) => s + m.salesCommissionTotal, 0)),
     productionCommission: round2(months.reduce((s, m) => s + m.productionCommission, 0)),
-    bonus: round2(months.reduce((s, m) => s + m.bonusTotal, 0)),
+    bonusHours: round2(months.reduce((s, m) => s + m.bonusHoursTotal, 0)),
   };
 
   return {

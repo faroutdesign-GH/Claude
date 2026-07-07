@@ -35,16 +35,20 @@ function fixture() {
   const laborByJob = new Map([
     // bonus 12 hrs (>10 -> 1.1x), split Alice 5/8, Bob 3/8
     ['J5', { bidPersonHours: 20, actualHours: 8, techs: new Map([
-      ['Alice', { hours: 5, hourlyRate: 40 }],
-      ['Bob', { hours: 3, hourlyRate: 30 }],
+      ['Alice', { hours: 5 }],
+      ['Bob', { hours: 3 }],
     ]) }],
     // negative bonus -> skipped
-    ['J1', { bidPersonHours: 4, actualHours: 6, techs: new Map([['Alice', { hours: 6, hourlyRate: 40 }]]) }],
+    ['J1', { bidPersonHours: 4, actualHours: 6, techs: new Map([['Alice', { hours: 6 }]]) }],
     // bonus 6 hrs (<=10 -> 1.0x), Alice only
-    ['J3', { bidPersonHours: 10, actualHours: 4, techs: new Map([['Alice', { hours: 4, hourlyRate: 40 }]]) }],
+    ['J3', { bidPersonHours: 10, actualHours: 4, techs: new Map([['Alice', { hours: 4 }]]) }],
   ]);
 
-  return { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob };
+  // J1, J2, J3 are fully paid; J5 is closed but NOT paid (so it is excluded
+  // from production commission but still yields technician bonus hours).
+  const fullyPaidJobIds = new Set(['J1', 'J2', 'J3']);
+
+  return { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob, fullyPaidJobIds };
 }
 
 test('capFor applies Ben tiers, Derek flat, and default', () => {
@@ -96,28 +100,28 @@ test('buildReport: sales commission recognized on close, with cap flags', () => 
   assert.equal(j3.overCap, false); // exactly at cap
 });
 
-test('buildReport: Derek production commission = 2% of company jobs closed/month', () => {
+test('buildReport: Derek production commission = 2% of closed AND paid jobs/month', () => {
   const r = buildReport(fixture(), config, 2026);
-  // March closed: J1 8000 + J3 5000 + J5 12000 = 25000 -> 500
-  assert.equal(r.months[2].productionCommission, 500);
-  // April closed: J2 20000 -> 400
+  // March closed + paid: J1 8000 + J3 5000 = 13000 -> 260 (J5 closed but unpaid)
+  assert.equal(r.months[2].productionCommission, 260);
+  // April closed + paid: J2 20000 -> 400
   assert.equal(r.months[3].productionCommission, 400);
-  assert.equal(r.grand.productionCommission, 900);
-  assert.equal(r.repTotals.Derek.productionCommission, 900);
-  assert.equal(r.repTotals.Derek.totalCommission, 1150); // 250 + 900
+  assert.equal(r.grand.productionCommission, 660);
+  assert.equal(r.repTotals.Derek.productionCommission, 660);
+  assert.equal(r.repTotals.Derek.totalCommission, 910); // 250 + 660
 });
 
-test('buildReport: technician bonus hours, multiplier, and per-tech split', () => {
+test('buildReport: technician bonus HOURS, multiplier, and per-tech split', () => {
   const r = buildReport(fixture(), config, 2026);
   const mar = r.months[2];
-  // J5: 12 bonus hrs @1.1x -> Alice 7.5*1.1*40=330, Bob 4.5*1.1*30=148.5
-  // J3: 6 bonus hrs @1.0x -> Alice 6*1*40=240
-  assert.equal(mar.bonusByTech.Alice, 570); // 330 + 240
-  assert.equal(mar.bonusByTech.Bob, 148.5);
-  assert.equal(mar.bonusTotal, 718.5);
-  assert.equal(r.grand.bonus, 718.5);
-  assert.equal(r.techTotals.Alice, 570);
-  assert.equal(r.techTotals.Bob, 148.5);
+  // J5: 12 bonus hrs @1.1x -> Alice 7.5*1.1=8.25, Bob 4.5*1.1=4.95 (unpaid job still yields bonus)
+  // J3: 6 bonus hrs @1.0x -> Alice 6
+  assert.equal(mar.bonusHoursByTech.Alice, 14.25); // 8.25 + 6
+  assert.equal(mar.bonusHoursByTech.Bob, 4.95);
+  assert.equal(mar.bonusHoursTotal, 19.2);
+  assert.equal(r.grand.bonusHours, 19.2);
+  assert.equal(r.techTotals.Alice, 14.25);
+  assert.equal(r.techTotals.Bob, 4.95);
   // J1 had negative bonus -> no entry
   assert.equal(r.detail.bonus.some((d) => d.jobId === 'J1'), false);
 });

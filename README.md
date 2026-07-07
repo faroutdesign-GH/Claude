@@ -57,23 +57,26 @@ The policy **cap** is shown for reference and any line above cap is flagged:
 | Curtice | 5% (default — no stated policy) |
 
 ### Production commission — *Derek, computed*
-2% of the price of **jobs closed in the month**, attributed to Derek and (per policy)
-paid out the following month. This is **not** a line item — it is computed here.
+2% of the price of **jobs that are closed and fully paid in the month**, attributed to
+Derek and (per policy) paid out the following month. A job qualifies once it is marked
+closed (treated as completed) **and** its customer invoices are fully collected. This is
+**not** a line item — it is computed here.
 
 ### Technician bonus hours
-Unused labor hours on a closed job become a technician bonus:
+Unused labor hours on a closed job become a technician bonus. The report outputs
+**bonus hours** — payroll multiplies them by each technician's own wage.
 
 ```
-bonusHours = bidPersonHours − actualClockedHours          (per job, if positive)
-payMultiplier = 1.1  if bonusHours > 10   else 1.0
-bonusPay = bonusHours × payMultiplier × technician wage
+bonusHours   = bidPersonHours − actualClockedHours        (per job, if positive)
+multiplier   = 1.1  if bonusHours > 10   else 1.0
+payableHours = bonusHours × multiplier
 ```
 
 - **Bid person‑hours** come from labor cost‑item quantities scaled by crew size
   (`1–4 Technician Labor` codes), falling back to the "Labor Hours" custom field.
-- **Actual hours & wage** come from time entries (`minutes`, `hourlyRate`, `user`).
-- When multiple technicians worked a job, the bonus is split in proportion to the
-  hours each clocked.
+- **Actual hours** and **who worked** come from time entries (`minutes`, `user`).
+- When multiple technicians worked a job, the bonus hours are split in proportion to
+  the hours each clocked.
 
 ## Assumptions & knobs
 
@@ -84,13 +87,15 @@ done. The ones most worth confirming with the business:
    JobTread to appear in a month's sales‑commission and bonus totals. Commission
    lines on jobs not yet closed are summed separately and reported as "open" so
    nothing is silently dropped.
-2. **Production commission base = *all* jobs closed that month** (`scope: 'company'`).
-   If Derek's 2% is meant to apply only to jobs where he is the rep, set
+2. **Production commission base = all jobs closed *and fully paid* that month**
+   (`scope: 'company'`). "Fully paid" means the job's customer invoices are fully
+   collected (`amountPaid ≥ priceWithTax`); "completed" is taken to be the closed
+   state. If Derek's 2% is meant to apply only to jobs where he is the rep, set
    `productionCommission.scope = 'own'`.
 3. **Sales‑commission caps are advisory.** The report never overrides the entered
    line item; it only flags lines above the policy cap.
-4. **Bonus wage = the time entry's `hourlyRate`** (the labor cost rate logged on the
-   entry). If technicians' true wages differ, adjust the source or the config.
+4. **Bonus is reported in hours, not dollars.** Payroll multiplies the payable bonus
+   hours by each technician's wage — wages are not read from JobTread.
 5. **Revenue = collected cash** (paid invoices), so revenue timing and
    commission‑on‑close timing are intentionally on different clocks.
 

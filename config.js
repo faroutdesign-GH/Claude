@@ -65,14 +65,14 @@ module.exports = {
     },
   },
 
-  // Derek's production commission: 2% based on jobs closed in the month.
-  // Computed (not a budget line item) and reported the following month.
-  //   scope 'company'  -> 2% of the price of ALL jobs closed that month
-  //   scope 'own'      -> 2% of the price of jobs closed that month where
-  //                       Derek is the Sales Rep
+  // Derek's production commission: 2% based on jobs that are closed, completed,
+  // and PAID in the month. Computed (not a budget line item) and reported the
+  // following month. A job counts once it is marked closed (treated as
+  // completed) AND its customer invoices are fully paid; it is recognized in
+  // the month it closed.
+  //   scope 'company'  -> 2% of the price of all qualifying jobs that month
+  //   scope 'own'      -> only jobs where Derek is the Sales Rep
   // `base` is which price to use ('price' or 'priceWithTax').
-  // Default is 'company' because it is a *production* (not sales) commission;
-  // confirm with the business and switch to 'own' if that is the intent.
   productionCommission: {
     rep: 'Derek',
     rate: 0.02,
@@ -81,12 +81,12 @@ module.exports = {
   },
 
   // Technician bonus hours: unused hours from a job's labor bid, given to the
-  // technician(s) who did the physical work.
+  // technician(s) who did the physical work. The report outputs BONUS HOURS
+  // (payroll multiplies by each technician's own wage) — not dollars.
   //   bonusHours = max(0, bidPersonHours - actualClockedHours)   [per job]
   // If a job's bonus hours exceed `thresholdHours`, every bonus hour on that
-  // job pays at `multiplier`; otherwise at `baseMultiplier`. Bonus pay is
-  // bonusHours * payMultiplier * technician hourly wage, split across the
-  // technicians who worked the job in proportion to the hours each clocked.
+  // job counts at `multiplier`; otherwise at `baseMultiplier`. Hours are split
+  // across the technicians who worked the job in proportion to hours clocked.
   bonusHours: {
     thresholdHours: 10,
     multiplier: 1.1,

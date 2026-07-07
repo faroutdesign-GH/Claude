@@ -146,6 +146,49 @@ async function fetchCommissionLines(orgId, costCodeId, opts = {}) {
 }
 
 /**
+ * Fetch customer-invoice totals per job to determine which jobs are fully paid.
+ * A job is fully paid when it has been invoiced and the amount paid covers the
+ * invoiced total (incl. tax).
+ *
+ * @returns {Promise<Map<string, {invoiced:number, paid:number, fullyPaid:boolean}>>}
+ */
+async function fetchInvoiceTotalsByJob(orgId, opts = {}) {
+  const EPS = 0.005;
+  const nodes = await paginate(
+    (page) => ({
+      organization: {
+        $: { id: orgId },
+        documents: {
+          $: { size: PAGE_SIZE, page, where: ['type', 'customerInvoice'] },
+          nextPage: {},
+          nodes: {
+            priceWithTax: {},
+            amountPaid: {},
+            job: { id: {} },
+          },
+        },
+      },
+    }),
+    ['organization', 'documents'],
+    opts
+  );
+
+  const byJob = new Map();
+  for (const inv of nodes) {
+    const jobId = inv.job && inv.job.id;
+    if (!jobId) continue;
+    const cur = byJob.get(jobId) || { invoiced: 0, paid: 0 };
+    cur.invoiced += Number(inv.priceWithTax) || 0;
+    cur.paid += Number(inv.amountPaid) || 0;
+    byJob.set(jobId, cur);
+  }
+  for (const v of byJob.values()) {
+    v.fullyPaid = v.invoiced > EPS && v.paid >= v.invoiced - EPS;
+  }
+  return byJob;
+}
+
+/**
  * For a set of jobs, fetch the data needed for the technician bonus-hours
  * calculation: bid labor person-hours (from labor cost-item quantities scaled
  * by crew size) and actual clocked hours per technician (from time entries).
@@ -182,7 +225,6 @@ async function fetchJobLaborAndTime(orgId, jobIds, opts = {}) {
           $: { size: 500 },
           nodes: {
             minutes: {},
-            hourlyRate: {},
             user: { name: {} },
           },
         },
@@ -214,7 +256,7 @@ async function fetchJobLaborAndTime(orgId, jobIds, opts = {}) {
         }
       }
 
-      // Actual clocked hours per technician.
+      // Actual clocked hours per technician (the person who did the work).
       const techs = new Map();
       let actualHours = 0;
       const te = (node.timeEntries && node.timeEntries.nodes) || [];
@@ -222,16 +264,9 @@ async function fetchJobLaborAndTime(orgId, jobIds, opts = {}) {
         const hrs = (Number(entry.minutes) || 0) / 60;
         actualHours += hrs;
         const name = (entry.user && entry.user.name) || 'Unknown';
-        const rate = Number(entry.hourlyRate) || 0;
-        const cur = techs.get(name) || { hours: 0, hourlyRate: 0, _rateHours: 0 };
+        const cur = techs.get(name) || { hours: 0 };
         cur.hours += hrs;
-        // Track an hours-weighted average wage in case the rate varies.
-        cur._rateHours += rate * hrs;
         techs.set(name, cur);
-      }
-      for (const t of techs.values()) {
-        t.hourlyRate = t.hours > 0 ? t._rateHours / t.hours : 0;
-        delete t._rateHours;
       }
 
       result.set(jobId, { bidPersonHours, actualHours, techs });
@@ -244,6 +279,7 @@ module.exports = {
   fetchJobs,
   fetchPaidInvoiceRevenue,
   fetchCommissionLines,
+  fetchInvoiceTotalsByJob,
   fetchJobLaborAndTime,
   PAGE_SIZE,
 };
