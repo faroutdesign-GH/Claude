@@ -1,0 +1,791 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Analysis — Electrical Contracting · Far Out Design</title>
+<style>
+  /* ============ TOKENS ============ */
+  :root {
+    --page:#eef1f5; --surface:#ffffff; --surface-2:#f6f9fc; --surface-3:#eef3f9;
+    --ink:#0d141c; --ink-2:#48535f; --muted:#7c8794;
+    --grid:#e3e9f0; --baseline:#c4ccd6; --border:rgba(13,20,28,0.10); --border-2:rgba(13,20,28,0.06);
+    --accent:#2a78d6; --accent-2:#1c5cab; --accent-soft:rgba(42,120,214,0.12);
+    --copper:#a9641f; --copper-soft:rgba(169,100,31,0.12);
+    --good:#0f8a12; --good-ink:#0a6b0d; --good-soft:rgba(15,138,18,0.12);
+    --warn:#b57400; --crit:#c8352f; --crit-soft:rgba(200,53,47,0.10); --crit-ink:#a3231e;
+    --neutral-bar:#aeb8c4;
+    --shadow:0 1px 2px rgba(13,20,28,.05), 0 6px 20px -12px rgba(13,20,28,.18);
+    --mono:ui-monospace,"SF Mono","SFMono-Regular","Menlo",Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --page:#090c11; --surface:#12161d; --surface-2:#171c25; --surface-3:#1c222c;
+      --ink:#f3f6fb; --ink-2:#a9b4c2; --muted:#79838f;
+      --grid:#222935; --baseline:#333d4a; --border:rgba(255,255,255,0.10); --border-2:rgba(255,255,255,0.05);
+      --accent:#3987e5; --accent-2:#6da7ec; --accent-soft:rgba(57,135,229,0.16);
+      --copper:#d79a4f; --copper-soft:rgba(215,154,79,0.15);
+      --good:#12b21a; --good-ink:#3ecb45; --good-soft:rgba(18,178,26,0.16);
+      --warn:#e0a531; --crit:#e66767; --crit-soft:rgba(230,103,103,0.14); --crit-ink:#f08a8a;
+      --neutral-bar:#4a5462;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px -14px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{
+    --page:#eef1f5; --surface:#ffffff; --surface-2:#f6f9fc; --surface-3:#eef3f9;
+    --ink:#0d141c; --ink-2:#48535f; --muted:#7c8794;
+    --grid:#e3e9f0; --baseline:#c4ccd6; --border:rgba(13,20,28,0.10); --border-2:rgba(13,20,28,0.06);
+    --accent:#2a78d6; --accent-2:#1c5cab; --accent-soft:rgba(42,120,214,0.12);
+    --copper:#a9641f; --copper-soft:rgba(169,100,31,0.12);
+    --good:#0f8a12; --good-ink:#0a6b0d; --good-soft:rgba(15,138,18,0.12);
+    --warn:#b57400; --crit:#c8352f; --crit-soft:rgba(200,53,47,0.10); --crit-ink:#a3231e;
+    --neutral-bar:#aeb8c4;
+    --shadow:0 1px 2px rgba(13,20,28,.05), 0 6px 20px -12px rgba(13,20,28,.18);
+  }
+  :root[data-theme="dark"]{
+    --page:#090c11; --surface:#12161d; --surface-2:#171c25; --surface-3:#1c222c;
+    --ink:#f3f6fb; --ink-2:#a9b4c2; --muted:#79838f;
+    --grid:#222935; --baseline:#333d4a; --border:rgba(255,255,255,0.10); --border-2:rgba(255,255,255,0.05);
+    --accent:#3987e5; --accent-2:#6da7ec; --accent-soft:rgba(57,135,229,0.16);
+    --copper:#d79a4f; --copper-soft:rgba(215,154,79,0.15);
+    --good:#12b21a; --good-ink:#3ecb45; --good-soft:rgba(18,178,26,0.16);
+    --warn:#e0a531; --crit:#e66767; --crit-soft:rgba(230,103,103,0.14); --crit-ink:#f08a8a;
+    --neutral-bar:#4a5462;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px -14px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  .viz-root{
+    background:var(--page); color:var(--ink); font-family:var(--sans);
+    line-height:1.5; -webkit-font-smoothing:antialiased; padding:0 0 64px;
+    min-height:100vh;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+  /* ============ HEADER ============ */
+  header.top{
+    border-bottom:1px solid var(--border);
+    background:
+      radial-gradient(120% 140% at 88% -10%, var(--accent-soft), transparent 60%),
+      var(--surface);
+    position:relative; overflow:hidden;
+  }
+  header.top::after{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(var(--border-2) 1px,transparent 1px),linear-gradient(90deg,var(--border-2) 1px,transparent 1px);
+    background-size:34px 34px; mask-image:linear-gradient(180deg,#000,transparent 75%);
+  }
+  .top-inner{padding:30px 0 26px; position:relative; z-index:1}
+  .brandline{display:flex; align-items:center; gap:11px; flex-wrap:wrap; margin-bottom:16px}
+  .spark{width:26px;height:26px;flex:none}
+  .kicker{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--copper); font-weight:600;
+  }
+  .kicker .sep{color:var(--muted); margin:0 8px; opacity:.6}
+  h1{
+    font-size:clamp(27px,4.6vw,44px); line-height:1.05; margin:0 0 12px; letter-spacing:-.02em;
+    font-weight:760; text-wrap:balance; max-width:20ch;
+  }
+  h1 .em{color:var(--accent)}
+  .dek{font-size:16px; color:var(--ink-2); max-width:64ch; margin:0}
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:20px;
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+  }
+  .meta-row b{color:var(--ink-2); font-weight:600}
+  .toggle{
+    position:absolute; top:18px; right:20px; z-index:3;
+    display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+    background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);
+    border-radius:100px; padding:7px 13px; font-family:var(--mono); font-size:11px;
+    letter-spacing:.04em;
+  }
+  .toggle:hover{border-color:var(--accent); color:var(--ink)}
+  .toggle:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ============ SECTIONS ============ */
+  section{margin-top:42px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:16px; flex-wrap:wrap}
+  .sec-num{font-family:var(--mono); font-size:12px; color:var(--copper); font-weight:600; letter-spacing:.05em}
+  h2{font-size:20px; letter-spacing:-.01em; margin:0; font-weight:680}
+  .sec-sub{color:var(--ink-2); font-size:14px; margin:4px 0 0; max-width:74ch}
+
+  /* ============ KPI HERO ============ */
+  .kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:-30px; position:relative; z-index:2}
+  @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:560px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  .kpi{
+    background:var(--surface); border:1px solid var(--border); border-radius:13px;
+    padding:15px 15px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .kpi::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); opacity:.8}
+  .kpi.copper::before{background:var(--copper)}
+  .kpi.good::before{background:var(--good)}
+  .kpi .lbl{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-bottom:9px; display:block; line-height:1.3}
+  .kpi .val{font-size:26px; font-weight:720; letter-spacing:-.02em; line-height:1; font-variant-numeric:tabular-nums}
+  .kpi .val small{font-size:15px; font-weight:640; color:var(--ink-2)}
+  .kpi .note{font-size:11.5px; color:var(--ink-2); margin-top:7px; line-height:1.35}
+
+  /* ============ CARDS / PANELS ============ */
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:var(--shadow)}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .grid-2.wide-left{grid-template-columns:1.5fr 1fr}
+  @media(max-width:820px){.grid-2,.grid-2.wide-left{grid-template-columns:1fr}}
+  .panel h3{margin:0 0 3px; font-size:15px; font-weight:660}
+  .panel .h3sub{font-size:12.5px; color:var(--muted); margin:0 0 16px}
+
+  .chart{width:100%}
+  .chart svg{display:block; width:100%; height:auto; overflow:visible}
+  text{font-family:var(--sans)}
+  .ax{fill:var(--muted); font-size:11px}
+  .ax.mono{font-family:var(--mono)}
+  .val-lbl{fill:var(--ink); font-size:11.5px; font-weight:640; font-variant-numeric:tabular-nums; font-family:var(--mono)}
+  .val-lbl.sub{fill:var(--ink-2); font-weight:500}
+  .cat-lbl{fill:var(--ink-2); font-size:12px}
+  .gridline{stroke:var(--grid); stroke-width:1}
+  .baseline{stroke:var(--baseline); stroke-width:1}
+  .bar{transition:opacity .15s} .bar:hover{opacity:.82; cursor:default}
+  .dot-end{fill:var(--accent)}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:14px; font-size:12px; color:var(--ink-2)}
+  .legend span{display:inline-flex; align-items:center; gap:7px}
+  .swatch{width:11px; height:11px; border-radius:3px; flex:none}
+
+  /* meter rows (benchmarks) */
+  .meter-row{margin:0 0 17px}
+  .meter-row:last-child{margin-bottom:2px}
+  .meter-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:6px}
+  .meter-name{font-size:13px; color:var(--ink); font-weight:560}
+  .meter-you{font-family:var(--mono); font-size:13px; font-weight:680; color:var(--accent); font-variant-numeric:tabular-nums}
+  .track{height:9px; border-radius:6px; background:var(--surface-3); position:relative; overflow:visible}
+  .track .fill{height:100%; border-radius:6px; background:var(--accent); position:relative}
+  .track .bench{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--copper); border-radius:2px}
+  .track .bench::after{content:attr(data-l); position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:9.5px; color:var(--copper); white-space:nowrap}
+  .meter-cap{font-size:11.5px; color:var(--ink-2); margin-top:11px; line-height:1.4}
+
+  /* stat inline chips */
+  .chips{display:flex; flex-wrap:wrap; gap:10px}
+  .chip{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 13px; flex:1 1 130px;
+  }
+  .chip .cv{font-size:19px; font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums; line-height:1}
+  .chip .cl{font-size:11px; color:var(--ink-2); margin-top:5px; line-height:1.3}
+  .chip.pill-good .cv{color:var(--good-ink)} .chip.pill-crit .cv{color:var(--crit-ink)}
+
+  /* driver cards */
+  .drivers{display:grid; grid-template-columns:repeat(2,1fr); gap:13px}
+  @media(max-width:640px){.drivers{grid-template-columns:1fr}}
+  .driver{background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px 17px; box-shadow:var(--shadow); position:relative}
+  .driver .dh{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+  .driver .dn{font-size:14px; font-weight:640}
+  .cagr{font-family:var(--mono); font-size:12px; font-weight:700; color:var(--good-ink); background:var(--good-soft); padding:3px 8px; border-radius:6px; white-space:nowrap}
+  .driver .ds{font-size:12.5px; color:var(--ink-2); margin:0 0 8px}
+  .driver .dnote{font-size:12px; color:var(--ink); border-left:2px solid var(--copper); padding-left:10px; margin:0}
+  .driver .dnote b{color:var(--copper)}
+
+  /* tables */
+  table{border-collapse:collapse; width:100%; font-size:13px}
+  .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--border-2)}
+  th{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; border-bottom:1px solid var(--border)}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono)}
+  tbody tr:hover{background:var(--surface-2)}
+  .price-tbl td:first-child{font-weight:540}
+
+  /* takeaways */
+  .takes{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media(max-width:760px){.takes{grid-template-columns:1fr}}
+  .take{background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:17px 18px; box-shadow:var(--shadow); position:relative}
+  .take .tk{font-family:var(--mono); font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.04em; margin-bottom:8px}
+  .take h4{margin:0 0 6px; font-size:14.5px; font-weight:660}
+  .take p{margin:0; font-size:13px; color:var(--ink-2); line-height:1.5}
+  .take p b{color:var(--ink)}
+
+  /* callout */
+  .callout{
+    background:linear-gradient(90deg,var(--accent-soft),transparent 80%);
+    border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:11px; padding:14px 17px; margin-top:16px; font-size:13.5px; color:var(--ink); line-height:1.5;
+  }
+  .callout b{color:var(--accent-2)}
+
+  details{margin-top:14px; border:1px solid var(--border); border-radius:11px; background:var(--surface); overflow:hidden}
+  summary{cursor:pointer; padding:13px 18px; font-family:var(--mono); font-size:12px; letter-spacing:.04em; color:var(--ink-2); list-style:none; user-select:none}
+  summary::-webkit-details-marker{display:none}
+  summary:hover{color:var(--ink)}
+  summary::before{content:"▸ "; color:var(--accent)}
+  details[open] summary::before{content:"▾ "}
+  details .dbody{padding:4px 18px 18px}
+
+  footer{margin-top:52px; border-top:1px solid var(--border); padding-top:24px; color:var(--muted); font-size:12px}
+  footer h4{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-2); margin:0 0 10px}
+  .src-list{columns:2; column-gap:28px; font-size:11.5px; line-height:1.7}
+  @media(max-width:640px){.src-list{columns:1}}
+  .src-list a{color:var(--ink-2); text-decoration:none; border-bottom:1px solid var(--border)}
+  .src-list a:hover{color:var(--accent)}
+  .disclaim{margin-top:18px; font-size:11px; line-height:1.6; max-width:80ch}
+
+  /* tooltip */
+  #tip{
+    position:fixed; z-index:50; pointer-events:none; opacity:0; transition:opacity .1s;
+    background:var(--surface); color:var(--ink); border:1px solid var(--border);
+    border-radius:9px; padding:9px 11px; box-shadow:var(--shadow); font-size:12px; min-width:120px;
+  }
+  #tip .tt-t{font-weight:640; margin-bottom:5px; font-size:12.5px}
+  #tip .tt-r{display:flex; justify-content:space-between; gap:16px; font-variant-numeric:tabular-nums}
+  #tip .tt-r .k{color:var(--ink-2)} #tip .tt-r .v{font-family:var(--mono); font-weight:600}
+  .crosshair{stroke:var(--accent); stroke-width:1; stroke-dasharray:3 3; opacity:0}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="viz-root">
+<header class="top">
+  <button class="toggle" id="themeBtn" aria-label="Toggle color theme">◐ <span id="themeLbl">Theme</span></button>
+  <div class="wrap top-inner">
+    <div class="brandline">
+      <svg class="spark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="var(--copper)" stroke="var(--copper)" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      <span class="kicker">Market Analysis<span class="sep">/</span>Electrical Contracting</span>
+    </div>
+    <h1>Where <span class="em">Far Out Design</span> stands in the Tampa&nbsp;Bay electrical market</h1>
+    <p class="dek">A read of the business's own JobTread pipeline — 312 awarded projects worth $761K — set against the U.S. and Florida electrical-contracting market, its demand drivers, and contractor financial benchmarks.</p>
+    <div class="meta-row">
+      <span><b>Far Out Design inc</b> · Seminole, FL 33776</span>
+      <span>Data window <b>Mar 2025 – Jul 2026</b></span>
+      <span>Source <b>JobTread</b> + market research</span>
+      <span>Prepared <b>Jul 6, 2026</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- KPI HERO -->
+  <div class="kpi-grid" id="kpis"></div>
+
+  <!-- 1. PIPELINE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>The sales pipeline</h2></div>
+    <p class="sec-sub">Of a 2,149-account customer database, 312 jobs reached <b>Project Awarded</b>. Among opportunities that reached a decision, Far Out wins more than it loses — but a large imported lead list sits untouched.</p>
+    <div class="grid-2 wide-left" style="margin-top:6px">
+      <div class="panel">
+        <h3>Decided outcomes &amp; active pipeline</h3>
+        <p class="h3sub">Job count by disposition · won vs. lost among decided opportunities</p>
+        <div class="chart" id="ch-pipe"></div>
+        <div class="legend" id="lg-pipe"></div>
+      </div>
+      <div class="panel" style="display:flex; flex-direction:column; gap:14px">
+        <div>
+          <h3 style="margin-bottom:12px">Conversion snapshot</h3>
+          <div class="chips">
+            <div class="chip pill-good"><div class="cv" id="c-win">56.6%</div><div class="cl">Win rate among <b>decided</b> opportunities (312 won ÷ 551 decided)</div></div>
+            <div class="chip"><div class="cv">~$78K</div><div class="cl">Open value in the active estimating pipeline (7 stages)</div></div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:0">
+          <b>1,165 imported leads</b> remain in "New Lead" with no follow-up and ~$0 value — the single largest reactivation opportunity in the database.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. REVENUE OVER TIME -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Awarded work over time</h2></div>
+    <p class="sec-sub">Monthly value of newly-awarded projects and job count, by month created. Revenue is lumpy — a few large projects swing any single month — on a trailing-12-month base of roughly $491K.</p>
+    <div class="panel" style="margin-top:6px">
+      <h3>Awarded project value by month</h3>
+      <p class="h3sub">USD · Mar 2025 – Jun 2026 (Jul 2026 partial, excluded)</p>
+      <div class="chart" id="ch-rev"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h3>Awarded jobs by month</h3>
+      <p class="h3sub">Count of projects reaching "Project Awarded"</p>
+      <div class="chart" id="ch-jobs"></div>
+    </div>
+  </section>
+
+  <!-- 3. GEOGRAPHY -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Service area</h2></div>
+    <p class="sec-sub">Awarded revenue by sub-region. The business is a Pinellas County specialist, with Tampa/Hillsborough as its clearest expansion edge.</p>
+    <div class="grid-2 wide-left" style="margin-top:6px">
+      <div class="panel">
+        <h3>Awarded revenue by region</h3>
+        <p class="h3sub">USD · bars sized by revenue · job count at right</p>
+        <div class="chart" id="ch-geo"></div>
+      </div>
+      <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <h3 style="margin-bottom:12px">Geographic concentration</h3>
+          <div class="chips">
+            <div class="chip"><div class="cv" style="color:var(--accent)">~83%</div><div class="cl">of revenue is inside <b>Pinellas County</b> (255 of 312 jobs)</div></div>
+            <div class="chip"><div class="cv">11%</div><div class="cl">from <b>Hillsborough / Tampa</b> — the growth edge</div></div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:0">
+          Tampa Bay is projected to add <b>~397,000 residents by 2030</b>; Hillsborough alone gained ~120,000 since 2020. The Tampa side is under-penetrated relative to that growth.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. JOB VALUE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Where the money is</h2></div>
+    <p class="sec-sub">Awarded jobs by contract-value band. A classic contractor Pareto: a small number of larger projects carries most of the revenue.</p>
+    <div class="panel" style="margin-top:6px">
+      <h3>Revenue &amp; job count by contract-value band</h3>
+      <p class="h3sub">USD revenue (bar) · job count &amp; cumulative revenue share (labels)</p>
+      <div class="chart" id="ch-band"></div>
+    </div>
+    <div class="callout">
+      Projects of <b>$5K and up are ~12% of awarded jobs but 51% of revenue</b>; the 14 jobs above $10K alone drive one-third of the total. Moving the mix toward larger projects is the highest-leverage growth lever.
+    </div>
+  </section>
+
+  <!-- 5. MARKET CONTEXT -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>The market around the business</h2></div>
+    <p class="sec-sub">The U.S. electrical-contracting industry is a large, highly fragmented $345B market — most firms, like Far Out, run under $2M/yr. Florida is its most active construction state.</p>
+
+    <div class="kpi-grid" id="mkt-kpis" style="margin-top:6px; grid-template-columns:repeat(4,1fr)"></div>
+
+    <div class="sec-head" style="margin-top:34px"><span class="sec-num">05·a</span><h2 style="font-size:17px">Demand drivers</h2></div>
+    <p class="sec-sub" style="margin-bottom:16px">The trends pulling residential electrical work — each an adjacency Far Out can attach to its existing service base.</p>
+    <div class="drivers" id="drivers"></div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div class="panel">
+        <h3>Residential pricing benchmarks</h3>
+        <p class="h3sub">National ranges (2025–26); Far Out's ~$2,400 average job sits at panel-upgrade level</p>
+        <div class="table-scroll"><table class="price-tbl" id="price-tbl"></table></div>
+      </div>
+      <div class="panel">
+        <h3>Labor market</h3>
+        <p class="h3sub">A structural electrician shortage underwrites pricing power</p>
+        <div class="chips" style="margin-bottom:14px">
+          <div class="chip"><div class="cv">+9%</div><div class="cl">Projected electrician job growth 2024–34 (BLS) — faster than average</div></div>
+          <div class="chip"><div class="cv">$60.4K</div><div class="cl">Florida median electrician wage (May 2025, BLS)</div></div>
+          <div class="chip"><div class="cv">~81K</div><div class="cl">Projected U.S. electrician shortfall</div></div>
+          <div class="chip"><div class="cv">43,110</div><div class="cl">Electricians in FL — 3rd-most of any state</div></div>
+        </div>
+        <p class="dnote" style="font-size:12.5px; color:var(--ink); border-left:2px solid var(--copper); padding-left:10px; margin:0">Aging trade workforce + demand from EV, solar, and electrification means qualified labor — not leads — is the binding constraint industry-wide.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. HOW YOU COMPARE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>How Far Out compares</h2></div>
+    <p class="sec-sub">Far Out's own figures (blue) against electrical-contractor benchmarks (copper marker). Healthy on margin and deal size; the upside is mix and scale.</p>
+    <div class="grid-2" style="margin-top:6px">
+      <div class="panel">
+        <h3>Gross margin</h3>
+        <p class="h3sub">Projected price vs. projected cost on awarded work</p>
+        <div class="meter-row">
+          <div class="meter-top"><span class="meter-name">Far Out Design</span><span class="meter-you">57.1%</span></div>
+          <div class="track"><div class="fill" style="width:80%"></div><div class="bench" data-l="Svc 55%" style="left:78%"></div></div>
+          <p class="meter-cap">At or above the <b>55%+</b> benchmark for residential service work. The <b>65–67%</b> whole-company target is reachable by shifting toward larger, higher-margin projects.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Average job value</h3>
+        <p class="h3sub">Far Out vs. typical residential electrical tickets</p>
+        <div class="meter-row">
+          <div class="meter-top"><span class="meter-name">Far Out avg. awarded job</span><span class="meter-you">$2,440</span></div>
+          <div class="track"><div class="fill" style="width:68%"></div><div class="bench" data-l="Typical ~$350" style="left:10%"></div></div>
+          <p class="meter-cap">Roughly <b>7× the ~$350 typical electrician ticket</b> and near the price of a 200A panel upgrade — Far Out already skews toward install/project work, not just service calls.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Win rate (decided)</h3>
+        <p class="h3sub">Won vs. lost among opportunities that reached a decision</p>
+        <div class="meter-row">
+          <div class="meter-top"><span class="meter-name">Far Out Design</span><span class="meter-you">56.6%</span></div>
+          <div class="track"><div class="fill" style="width:57%"></div><div class="bench" data-l="Phone-lead ~46%" style="left:46%"></div></div>
+          <p class="meter-cap">Strong close rate — above the ~46% conversion benchmark for inbound phone leads in home services.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Revenue scale</h3>
+        <p class="h3sub">Trailing-12-month awarded value vs. industry structure</p>
+        <div class="meter-row">
+          <div class="meter-top"><span class="meter-name">Far Out (TTM awarded)</span><span class="meter-you">~$491K</span></div>
+          <div class="track"><div class="fill" style="width:25%"></div><div class="bench" data-l="$2M small-firm ceiling" style="left:98%"></div></div>
+          <p class="meter-cap">Squarely in the fragmented small-contractor field (most firms &lt; $2M/yr) — meaningful headroom to grow within the same market.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. TAKEAWAYS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>What the data points to</h2></div>
+    <div class="takes">
+      <div class="take"><div class="tk">MIX</div><h4>Chase the $5K+ project</h4><p>Larger jobs are <b>12% of work but half of revenue</b>. Prioritizing panel upgrades, rewires, generators and multi-circuit installs over one-off service calls lifts both revenue and margin toward the 65% benchmark.</p></div>
+      <div class="take"><div class="tk">DEMAND</div><h4>Ride storm-hardening &amp; electrification</h4><p>Pinellas standby-generator permits jumped <b>~50% in 2024</b>; EV charging is growing ~28%/yr and heat-pump conversions force panel upgrades. These are natural, high-ticket adjacencies to today's service base.</p></div>
+      <div class="take"><div class="tk">DATABASE</div><h4>Reactivate 1,165 dormant leads</h4><p>The imported "New Lead" list is worth almost nothing today. A structured re-engagement campaign against an aging <b>(median home built 1977–78)</b> housing stock could surface panel and safety upgrades at near-zero acquisition cost.</p></div>
+      <div class="take"><div class="tk">GEOGRAPHY</div><h4>Grow the Tampa side</h4><p>83% of revenue is in Pinellas while <b>Hillsborough adds the region's fastest population growth</b>. A deliberate push east converts proximity into pipeline where demand is expanding quickest.</p></div>
+    </div>
+  </section>
+
+  <!-- APPENDIX -->
+  <details>
+    <summary>Data appendix — full pipeline &amp; monthly tables</summary>
+    <div class="dbody">
+      <div class="grid-2">
+        <div>
+          <h3 style="font-size:14px;margin:10px 0 6px">Sales pipeline — all stages</h3>
+          <div class="table-scroll"><table id="tbl-pipe"></table></div>
+        </div>
+        <div>
+          <h3 style="font-size:14px;margin:10px 0 6px">Awarded work by month</h3>
+          <div class="table-scroll"><table id="tbl-month"></table></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <footer>
+    <h4>Sources</h4>
+    <div class="src-list">
+      <a href="https://www.ibisworld.com/united-states/market-size/electricians/189/">IBISWorld — U.S. Electricians market size &amp; business count</a>
+      <a href="https://www.bls.gov/ooh/construction-and-extraction/electricians.htm">BLS — Electricians Occupational Outlook (wages, +9% growth)</a>
+      <a href="https://www.jimersonfirm.com/services/administrative-law-licensing/electrical-contractor-licenses/">FL DBPR / Jimerson Birr — FL electrical licensing (~18,000)</a>
+      <a href="https://hurd.construction/floridas-construction-boom-and-current-trends/">ABC Merit Scorecard — Florida #1 construction state</a>
+      <a href="https://planhillsborough.org/tampa-bay-region-expecting-397k-or-547k-new-residents-through-2030/">Plan Hillsborough — Tampa Bay 2030 population projections</a>
+      <a href="https://www.mordorintelligence.com/industry-reports/residential-ev-charger-market">Mordor Intelligence — Residential EV charger market (CAGR)</a>
+      <a href="https://spectrumlocalnews.com/section/acrossamerica/news/2025/02/27/rising-residential-demand-for-standby-generators-">Spectrum News — Pinellas standby-generator permits +~50% (2024)</a>
+      <a href="https://www.marketgrowthreports.com/market-reports/home-standby-generator-market-103058">Market Growth Reports — Home standby generator market</a>
+      <a href="https://www.mordorintelligence.com/industry-reports/united-states-heat-pump-market">Mordor Intelligence — U.S. heat pump market</a>
+      <a href="https://www.theinvadingsea.com/2026/04/14/florida-solar-power-renewable-energy-climate-central-greenhouse-gases-electricity-demand/">The Invading Sea — Florida solar growth &amp; ranking</a>
+      <a href="https://eyeonhousing.org/2025/04/almost-half-of-the-owner-occupied-homes-built-before-1980/">NAHB Eye On Housing — aging housing stock</a>
+      <a href="https://www.point2homes.com/US/Neighborhood/FL/Pinellas-County-Demographics.html">Point2Homes — Pinellas County housing age</a>
+      <a href="https://www.angi.com/articles/ask-angie-what-does-it-cost-upgrade-200-amps.htm">Angi — panel upgrade &amp; rewire cost ranges</a>
+      <a href="https://homeguide.com/costs/electrician-cost-per-hour">HomeGuide — electrician rates, service calls, generators</a>
+      <a href="https://profitabilitypartners.io/electrical-contractor-profit-margins/">Profitability Partners — electrical contractor margins</a>
+      <a href="https://www.supplyht.com/articles/106612-home-services-call-performance-report-46-lead-conversion-rate-segment-benchmarks">Supply House Times — home-services lead conversion (~46%)</a>
+    </div>
+    <p class="disclaim">Internal figures are drawn from Far Out Design's JobTread account (organization "Far Out Design inc"), covering records created 19 Mar 2025 – 6 Jul 2026. "Revenue" and "gross margin" use each job's <em>projected price</em> and <em>projected cost</em> — the contracted/estimated values in JobTread — as a proxy for booked revenue and margin, not audited financial-statement figures; actual invoiced amounts and true net profit will differ. "Awarded" = jobs with Sales Status "Project Awarded" (312). Monthly figures are bucketed by job-created date. Market figures are third-party estimates from the sources listed above and carry their own methodologies and dates. This dashboard is decision-support, not financial or investment advice.</p>
+  </footer>
+</div>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  /* ---------- DATA ---------- */
+  var D = {
+    kpis:[
+      {lbl:"Awarded revenue",val:"$761K",note:"312 projects, Mar '25–Jul '26",cls:""},
+      {lbl:"Awarded projects",val:"312",note:"of 1,928 total job records",cls:""},
+      {lbl:"Avg. job value",val:"$2,440",note:"per awarded project",cls:""},
+      {lbl:"Gross margin",val:"57.1%",note:"projected price vs. cost",cls:"good"},
+      {lbl:"Win rate",val:"56.6%",note:"among decided opportunities",cls:"good"},
+      {lbl:"Customer accounts",val:"2,149",note:"+23 vendor accounts",cls:"copper"}
+    ],
+    pipe:[
+      {k:"Won — Project Awarded",v:312,c:"var(--good)"},
+      {k:"Lost / no-decision",v:239,c:"var(--crit)"},
+      {k:"Active estimating pipeline",v:133,c:"var(--accent)"},
+      {k:"Untouched imported leads",v:1165,c:"var(--neutral-bar)"}
+    ],
+    month:[
+      {m:"2025-03",rev:841.40,n:2},{m:"2025-04",rev:134937.73,n:25},{m:"2025-05",rev:74157.87,n:24},
+      {m:"2025-06",rev:59288.35,n:12},{m:"2025-07",rev:24138.53,n:18},{m:"2025-08",rev:44325.35,n:23},
+      {m:"2025-09",rev:70927.96,n:29},{m:"2025-10",rev:52150.60,n:26},{m:"2025-11",rev:40876.56,n:15},
+      {m:"2025-12",rev:86473.82,n:16},{m:"2026-01",rev:23573.62,n:23},{m:"2026-02",rev:23291.18,n:13},
+      {m:"2026-03",rev:43117.27,n:24},{m:"2026-04",rev:36494.18,n:19},{m:"2026-05",rev:18454.19,n:17},
+      {m:"2026-06",rev:27610.92,n:25}
+    ],
+    geo:[
+      {k:"St. Petersburg / Gulfport",rev:242078,n:81},
+      {k:"Mid-Pinellas · Seminole·Largo·Pinellas Pk",rev:161718,n:97},
+      {k:"North Pinellas · Clearwater·Dunedin",rev:133990,n:38},
+      {k:"Gulf Beaches",rev:93171,n:39},
+      {k:"Hillsborough / Tampa",rev:83228,n:33},
+      {k:"Manatee / Sarasota",rev:16836,n:10},
+      {k:"Pasco / Hernando",rev:16032,n:7}
+    ],
+    band:[
+      {k:"Under $500",rev:17011,n:51},{k:"$500–$1K",rev:44263,n:59},{k:"$1K–$2.5K",rev:157065,n:103},
+      {k:"$2.5K–$5K",rev:152684,n:43},{k:"$5K–$10K",rev:135407,n:20},{k:"$10K+",rev:254622,n:14}
+    ],
+    mktKpis:[
+      {lbl:"U.S. market size",val:"$345B",note:"2025; ~262,000 businesses (IBISWorld)"},
+      {lbl:"Market structure",val:"Fragmented",note:"most firms under $2M/yr revenue"},
+      {lbl:"FL construction rank",val:"#1",note:"most active construction state (ABC)"},
+      {lbl:"Tampa Bay metro",val:"3.04M",note:"population, growing ~1%/yr"}
+    ],
+    drivers:[
+      {n:"EV charger installs",cagr:"~28%/yr",s:"U.S. EV charging equipment $4.95B → $16.79B by 2030.",note:"<b>&gt;25M</b> private chargers needed nationally by 2030 (PwC)."},
+      {n:"Standby generators",cagr:"~11%/yr",s:"Global home standby market $3.15B → $9.28B by 2035.",note:"Pinellas / Tampa Bay permits up <b>~50% in 2024</b> (Spectrum News)."},
+      {n:"Heat pumps & panels",cagr:"~9%/yr",s:"U.S. heat pump market $14.8B → $22.7B by 2031.",note:"Older homes need <b>panel upgrades</b> to electrify — direct pull-through."},
+      {n:"Solar + storage",cagr:"FL 3rd",s:"Florida is the 3rd-largest U.S. solar producer; +1,106% in 5 yrs.",note:"Only <b>~4%</b> of FL homes have solar — long runway."}
+    ],
+    price:[
+      ["Service call (first hour)","$75–$200"],["Electrician hourly rate","$50–$130/hr"],
+      ["Ceiling fan / fixture install","$150–$500"],["Panel upgrade to 200A","$1,800–$4,500"],
+      ["Level 2 EV charger install","$1,200–$3,000"],["Standby generator (installed)","$6,000–$11,000"],
+      ["Whole-home rewire","$8,000–$30,000"]
+    ],
+    pipeFull:[
+      ["New Lead",1165,"$305"],["Service Call",31,"$23,038"],["In Review / Attempted Contact",45,"$5,944"],
+      ["Estimate / Onsite",19,"$5,165"],["Estimation Review",1,"—"],["Estimate Created",6,"$6,746"],
+      ["Estimate Sent",19,"$20,466"],["Estimate Approved",6,"$14,801"],["Contract Sent",6,"$2,244"],
+      ["Project Awarded",312,"$761,051"],["Lost Project / Bid",58,"—"],
+      ["Not Proceeding At This Time",137,"—"],["Lost / Customer Not Responsive",44,"$257"]
+    ]
+  };
+
+  /* ---------- HELPERS ---------- */
+  var SVGNS="http://www.w3.org/2000/svg";
+  function el(t,a){var e=document.createElementNS(SVGNS,t);if(a)for(var k in a)e.setAttribute(k,a[k]);return e;}
+  function $(id){return document.getElementById(id);}
+  function usd(v){return "$"+Math.round(v).toLocaleString("en-US");}
+  function usdK(v){return v>=1000?"$"+(v/1000).toFixed(v>=100000?0:0)+"K":"$"+Math.round(v);}
+  var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function mlabel(m){var p=m.split("-");return MON[+p[1]-1]+" '"+p[0].slice(2);}
+
+  var tip=$("tip");
+  function showTip(html,x,y){tip.innerHTML=html;tip.style.opacity="1";moveTip(x,y);}
+  function moveTip(x,y){var w=tip.offsetWidth,h=tip.offsetHeight;var nx=x+14,ny=y-h-10;
+    if(nx+w>window.innerWidth-8)nx=x-w-14; if(ny<8)ny=y+16; tip.style.left=nx+"px";tip.style.top=ny+"px";}
+  function hideTip(){tip.style.opacity="0";}
+
+  /* ---------- KPI TILES ---------- */
+  function renderKpis(host,items){
+    host.innerHTML="";
+    items.forEach(function(k){
+      var d=document.createElement("div");d.className="kpi"+(k.cls?" "+k.cls:"");
+      d.innerHTML='<span class="lbl">'+k.lbl+'</span><div class="val">'+k.val+'</div><div class="note">'+k.note+'</div>';
+      host.appendChild(d);
+    });
+  }
+
+  /* ---------- HORIZONTAL BAR (categorical/status, count) ---------- */
+  function hbarCount(host,data,opts){
+    opts=opts||{};
+    var W=560,rowH=44,padT=6,padB=8,labelW=0;
+    var H=padT+padB+data.length*rowH;
+    var plotL=210,plotR=64;
+    var max=Math.max.apply(null,data.map(function(d){return d.v;}));
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img"});
+    for(var gi=0;gi<=4;gi++){var gx=plotL+(W-plotL-plotR)*gi/4;
+      svg.appendChild(el("line",{class:"gridline",x1:gx,y1:padT,x2:gx,y2:H-padB}));}
+    data.forEach(function(d,i){
+      var y=padT+i*rowH, bh=20, by=y+(rowH-bh)/2-4;
+      var bw=(W-plotL-plotR)*(d.v/max);
+      var lbl=el("text",{class:"cat-lbl",x:plotL-12,y:by+bh/2+4,"text-anchor":"end"});lbl.textContent=d.k;
+      // wrap long labels
+      if(d.k.length>26){lbl.textContent="";var words=d.k.split(" ");var line="",lines=[];
+        words.forEach(function(w){if((line+" "+w).length>26){lines.push(line);line=w;}else line=line?line+" "+w:w;});lines.push(line);
+        lbl.setAttribute("y",by+bh/2-3*(lines.length-1)+4);
+        lines.forEach(function(ln,li){var ts=el("tspan",{x:plotL-12,dy:li?13:0});ts.textContent=ln;lbl.appendChild(ts);});}
+      svg.appendChild(lbl);
+      var r=el("rect",{class:"bar",x:plotL,y:by,width:Math.max(bw,3),height:bh,rx:4,fill:d.c});
+      r.addEventListener("mousemove",function(e){showTip('<div class="tt-t">'+d.k+'</div><div class="tt-r"><span class="k">Jobs</span><span class="v">'+d.v.toLocaleString()+'</span></div>',e.clientX,e.clientY);});
+      r.addEventListener("mouseleave",hideTip);
+      svg.appendChild(r);
+      var vl=el("text",{class:"val-lbl",x:plotL+Math.max(bw,3)+8,y:by+bh/2+4});vl.textContent=d.v.toLocaleString();
+      svg.appendChild(vl);
+    });
+    svg.appendChild(el("line",{class:"baseline",x1:plotL,y1:padT,x2:plotL,y2:H-padB}));
+    host.innerHTML="";host.appendChild(svg);
+  }
+
+  /* ---------- HORIZONTAL BAR (revenue + secondary count) ---------- */
+  function hbarRev(host,data,opts){
+    var W=560,rowH=40,padT=8,padB=8;
+    var H=padT+padB+data.length*rowH;
+    var plotL=232,plotR=140;
+    var max=Math.max.apply(null,data.map(function(d){return d.rev;}));
+    var maxi=data.reduce(function(a,d,i){return d.rev>data[a].rev?i:a;},0);
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img"});
+    for(var gi=0;gi<=4;gi++){var gx=plotL+(W-plotL-plotR)*gi/4;
+      svg.appendChild(el("line",{class:"gridline",x1:gx,y1:padT,x2:gx,y2:H-padB}));}
+    data.forEach(function(d,i){
+      var y=padT+i*rowH,bh=18,by=y+(rowH-bh)/2;
+      var bw=(W-plotL-plotR)*(d.rev/max);
+      var lbl=el("text",{class:"cat-lbl",x:plotL-12,y:by+bh/2+4,"text-anchor":"end"});
+      if(d.k.length>28){var words=d.k.split(" ");var line="",lines=[];
+        words.forEach(function(w){if((line+" "+w).length>28){lines.push(line);line=w;}else line=line?line+" "+w:w;});lines.push(line);
+        lbl.setAttribute("y",by+bh/2-3*(lines.length-1)+4);
+        lines.forEach(function(ln,li){var ts=el("tspan",{x:plotL-12,dy:li?12:0});ts.textContent=ln;lbl.appendChild(ts);});}
+      else lbl.textContent=d.k;
+      svg.appendChild(lbl);
+      var r=el("rect",{class:"bar",x:plotL,y:by,width:Math.max(bw,3),height:bh,rx:4,fill:i===maxi?"var(--accent)":"var(--accent)","fill-opacity":i===maxi?1:0.62});
+      r.addEventListener("mousemove",function(e){showTip('<div class="tt-t">'+d.k+'</div><div class="tt-r"><span class="k">Revenue</span><span class="v">'+usd(d.rev)+'</span></div><div class="tt-r"><span class="k">Jobs</span><span class="v">'+d.n+'</span></div><div class="tt-r"><span class="k">Avg</span><span class="v">'+usd(d.rev/d.n)+'</span></div>',e.clientX,e.clientY);});
+      r.addEventListener("mouseleave",hideTip);
+      svg.appendChild(r);
+      var vl=el("text",{class:"val-lbl",x:plotL+Math.max(bw,3)+8,y:by+bh/2+4});
+      var vs=el("tspan");vs.textContent=usdK(d.rev);vl.appendChild(vs);
+      var vn=el("tspan",{class:"val-lbl sub",dx:6});vn.textContent="· "+d.n+" jobs";vl.appendChild(vn);
+      svg.appendChild(vl);
+    });
+    svg.appendChild(el("line",{class:"baseline",x1:plotL,y1:padT,x2:plotL,y2:H-padB}));
+    host.innerHTML="";host.appendChild(svg);
+  }
+
+  /* ---------- VALUE-BAND BAR (revenue + count + cumulative) ---------- */
+  function bandChart(host,data){
+    var total=data.reduce(function(a,d){return a+d.rev;},0);
+    var W=560,rowH=46,padT=8,padB=8,plotL=92,plotR=196;
+    var H=padT+padB+data.length*rowH;
+    var max=Math.max.apply(null,data.map(function(d){return d.rev;}));
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img"});
+    for(var gi=0;gi<=4;gi++){var gx=plotL+(W-plotL-plotR)*gi/4;
+      svg.appendChild(el("line",{class:"gridline",x1:gx,y1:padT,x2:gx,y2:H-padB}));}
+    var cum=0;
+    data.forEach(function(d,i){
+      cum+=d.rev;var cpct=Math.round(cum/total*100);
+      var y=padT+i*rowH,bh=20,by=y+(rowH-bh)/2-3;
+      var bw=(W-plotL-plotR)*(d.rev/max);
+      var big=d.k==="$5K–$10K"||d.k==="$10K+";
+      var lbl=el("text",{class:"cat-lbl",x:plotL-10,y:by+bh/2+4,"text-anchor":"end"});lbl.textContent=d.k;svg.appendChild(lbl);
+      var r=el("rect",{class:"bar",x:plotL,y:by,width:Math.max(bw,3),height:bh,rx:4,fill:"var(--accent)","fill-opacity":big?1:0.6});
+      r.addEventListener("mousemove",function(e){showTip('<div class="tt-t">'+d.k+'</div><div class="tt-r"><span class="k">Revenue</span><span class="v">'+usd(d.rev)+'</span></div><div class="tt-r"><span class="k">Share</span><span class="v">'+Math.round(d.rev/total*100)+'%</span></div><div class="tt-r"><span class="k">Jobs</span><span class="v">'+d.n+'</span></div><div class="tt-r"><span class="k">Cumulative</span><span class="v">'+cpct+'%</span></div>',e.clientX,e.clientY);});
+      r.addEventListener("mouseleave",hideTip);svg.appendChild(r);
+      var vl=el("text",{class:"val-lbl",x:plotL+Math.max(bw,3)+8,y:by+bh/2+4});vl.textContent=usdK(d.rev)+"  ·  "+d.n+" jobs";
+      svg.appendChild(vl);
+      var cl=el("text",{class:"val-lbl sub",x:W-4,y:by+bh/2+4,"text-anchor":"end"});cl.textContent="Σ "+cpct+"%";
+      svg.appendChild(cl);
+    });
+    svg.appendChild(el("line",{class:"baseline",x1:plotL,y1:padT,x2:plotL,y2:H-padB}));
+    host.innerHTML="";host.appendChild(svg);
+  }
+
+  /* ---------- AREA (revenue over time) ---------- */
+  function areaChart(host,data,opts){
+    opts=opts||{};
+    var W=880,H=270,padT=16,padB=34,padL=52,padR=14;
+    var pw=W-padL-padR,ph=H-padT-padB;
+    var ymax=opts.ymax, key=opts.key||"rev";
+    var n=data.length;
+    var x=function(i){return padL+pw*(n===1?0.5:i/(n-1));};
+    var y=function(v){return padT+ph*(1-v/ymax);};
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img"});
+    // gridlines + y ticks
+    var ticks=opts.ticks;
+    ticks.forEach(function(t){var gy=y(t);
+      svg.appendChild(el("line",{class:"gridline",x1:padL,y1:gy,x2:W-padR,y2:gy}));
+      var tl=el("text",{class:"ax mono",x:padL-8,y:gy+4,"text-anchor":"end"});tl.textContent=opts.tickFmt(t);svg.appendChild(tl);});
+    // area path
+    var dPath="M"+x(0)+","+y(data[0][key]);
+    for(var i=1;i<n;i++)dPath+="L"+x(i)+","+y(data[i][key]);
+    var area=dPath+"L"+x(n-1)+","+y(0)+"L"+x(0)+","+y(0)+"Z";
+    var gid="grad_"+key;
+    var defs=el("defs");var lg=el("linearGradient",{id:gid,x1:0,y1:0,x2:0,y2:1});
+    lg.appendChild(el("stop",{offset:"0%","stop-color":"var(--accent)","stop-opacity":0.28}));
+    lg.appendChild(el("stop",{offset:"100%","stop-color":"var(--accent)","stop-opacity":0.02}));
+    defs.appendChild(lg);svg.appendChild(defs);
+    svg.appendChild(el("path",{d:area,fill:"url(#"+gid+")"}));
+    svg.appendChild(el("path",{d:dPath,fill:"none",stroke:"var(--accent)","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+    // x labels (every other)
+    data.forEach(function(d,i){ if(i%2!==0 && i!==n-1) return;
+      var xl=el("text",{class:"ax mono",x:x(i),y:H-14,"text-anchor":"middle"});xl.textContent=mlabel(d.m);svg.appendChild(xl);});
+    // emphasized endpoint
+    svg.appendChild(el("circle",{cx:x(n-1),cy:y(data[n-1][key]),r:4,class:"dot-end",stroke:"var(--surface)","stroke-width":2}));
+    // crosshair + hover
+    var cross=el("line",{class:"crosshair",y1:padT,y2:padT+ph});svg.appendChild(cross);
+    var hd=el("circle",{r:4.5,fill:"var(--accent)",stroke:"var(--surface)","stroke-width":2,opacity:0});svg.appendChild(hd);
+    var hit=el("rect",{x:padL,y:padT,width:pw,height:ph,fill:"transparent"});
+    hit.addEventListener("mousemove",function(e){
+      var box=svg.getBoundingClientRect();var rx=(e.clientX-box.left)/box.width*W;
+      var idx=Math.round((rx-padL)/(pw)*(n-1));idx=Math.max(0,Math.min(n-1,idx));
+      var px=x(idx),py=y(data[idx][key]);
+      cross.setAttribute("x1",px);cross.setAttribute("x2",px);cross.setAttribute("opacity",1);
+      hd.setAttribute("cx",px);hd.setAttribute("cy",py);hd.setAttribute("opacity",1);
+      var d=data[idx];
+      showTip('<div class="tt-t">'+mlabel(d.m)+'</div><div class="tt-r"><span class="k">Revenue</span><span class="v">'+usd(d.rev)+'</span></div><div class="tt-r"><span class="k">Jobs</span><span class="v">'+d.n+'</span></div>',e.clientX,e.clientY);
+    });
+    hit.addEventListener("mouseleave",function(){cross.setAttribute("opacity",0);hd.setAttribute("opacity",0);hideTip();});
+    svg.appendChild(hit);
+    host.innerHTML="";host.appendChild(svg);
+  }
+
+  /* ---------- COLUMN (jobs over time) ---------- */
+  function colChart(host,data,opts){
+    var W=880,H=170,padT=14,padB=32,padL=52,padR=14;
+    var pw=W-padL-padR,ph=H-padT-padB;
+    var ymax=opts.ymax,ticks=opts.ticks,n=data.length;
+    var bw=pw/n*0.62;
+    var x=function(i){return padL+pw*(i+0.5)/n;};
+    var y=function(v){return padT+ph*(1-v/ymax);};
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img"});
+    ticks.forEach(function(t){var gy=y(t);svg.appendChild(el("line",{class:"gridline",x1:padL,y1:gy,x2:W-padR,y2:gy}));
+      var tl=el("text",{class:"ax mono",x:padL-8,y:gy+4,"text-anchor":"end"});tl.textContent=t;svg.appendChild(tl);});
+    data.forEach(function(d,i){
+      var h=ph*(d.n/ymax),cx=x(i);
+      var r=el("rect",{class:"bar",x:cx-bw/2,y:padT+ph-h,width:bw,height:Math.max(h,1.5),rx:3,fill:"var(--accent)","fill-opacity":0.72});
+      r.addEventListener("mousemove",function(e){showTip('<div class="tt-t">'+mlabel(d.m)+'</div><div class="tt-r"><span class="k">Jobs awarded</span><span class="v">'+d.n+'</span></div><div class="tt-r"><span class="k">Revenue</span><span class="v">'+usd(d.rev)+'</span></div>',e.clientX,e.clientY);});
+      r.addEventListener("mouseleave",hideTip);svg.appendChild(r);
+      if(i%2===0||i===n-1){var xl=el("text",{class:"ax mono",x:cx,y:H-12,"text-anchor":"middle"});xl.textContent=mlabel(d.m);svg.appendChild(xl);}
+    });
+    svg.appendChild(el("line",{class:"baseline",x1:padL,y1:padT+ph,x2:W-padR,y2:padT+ph}));
+    host.innerHTML="";host.appendChild(svg);
+  }
+
+  /* ---------- LEGEND ---------- */
+  function legend(host,items){
+    host.innerHTML="";
+    items.forEach(function(it){var s=document.createElement("span");
+      s.innerHTML='<span class="swatch" style="background:'+it.c+'"></span>'+it.k;host.appendChild(s);});
+  }
+
+  /* ---------- DRIVERS ---------- */
+  function renderDrivers(host,items){
+    host.innerHTML="";
+    items.forEach(function(d){var c=document.createElement("div");c.className="driver";
+      c.innerHTML='<div class="dh"><span class="dn">'+d.n+'</span><span class="cagr">'+d.cagr+'</span></div>'+
+        '<p class="ds">'+d.s+'</p><p class="dnote">'+d.note+'</p>';host.appendChild(c);});
+  }
+
+  /* ---------- TABLES ---------- */
+  function priceTable(host,rows){
+    host.innerHTML="<thead><tr><th>Residential job</th><th class='num'>Typical range</th></tr></thead>";
+    var tb=document.createElement("tbody");
+    rows.forEach(function(r){var tr=document.createElement("tr");
+      tr.innerHTML="<td>"+r[0]+"</td><td class='num'>"+r[1]+"</td>";tb.appendChild(tr);});
+    host.appendChild(tb);
+  }
+  function pipeTable(host,rows){
+    host.innerHTML="<thead><tr><th>Sales status</th><th class='num'>Jobs</th><th class='num'>Proj. value</th></tr></thead>";
+    var tb=document.createElement("tbody");
+    rows.forEach(function(r){var tr=document.createElement("tr");
+      tr.innerHTML="<td>"+r[0]+"</td><td class='num'>"+r[1].toLocaleString()+"</td><td class='num'>"+r[2]+"</td>";tb.appendChild(tr);});
+    host.appendChild(tb);
+  }
+  function monthTable(host,rows){
+    host.innerHTML="<thead><tr><th>Month</th><th class='num'>Jobs</th><th class='num'>Revenue</th></tr></thead>";
+    var tb=document.createElement("tbody");
+    rows.forEach(function(r){var tr=document.createElement("tr");
+      tr.innerHTML="<td>"+mlabel(r.m)+"</td><td class='num'>"+r.n+"</td><td class='num'>"+usd(r.rev)+"</td>";tb.appendChild(tr);});
+    host.appendChild(tb);
+  }
+
+  /* ---------- THEME TOGGLE ---------- */
+  var root=document.documentElement;
+  function curTheme(){return root.getAttribute("data-theme")|| (window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");}
+  $("themeBtn").addEventListener("click",function(){
+    var next=curTheme()==="dark"?"light":"dark";root.setAttribute("data-theme",next);
+    $("themeLbl").textContent=next==="dark"?"Light":"Dark";
+  });
+
+  /* ---------- RENDER ALL ---------- */
+  renderKpis($("kpis"),D.kpis);
+  renderKpis($("mkt-kpis"),D.mktKpis);
+  hbarCount($("ch-pipe"),D.pipe);
+  legend($("lg-pipe"),D.pipe);
+  areaChart($("ch-rev"),D.month,{key:"rev",ymax:150000,ticks:[0,50000,100000,150000],tickFmt:function(t){return t?"$"+t/1000+"K":"$0";}});
+  colChart($("ch-jobs"),D.month,{ymax:30,ticks:[0,10,20,30]});
+  hbarRev($("ch-geo"),D.geo);
+  bandChart($("ch-band"),D.band);
+  renderDrivers($("drivers"),D.drivers);
+  priceTable($("price-tbl"),D.price);
+  pipeTable($("tbl-pipe"),D.pipeFull);
+  monthTable($("tbl-month"),D.month);
+})();
+</script>
