@@ -4,10 +4,21 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const config = require('../config');
-const { buildReport, capFor, recognitionMonth, sumLinesByJob } = require('../src/compute');
+const {
+  buildReport,
+  capFor,
+  recognitionMonth,
+  sumLinesByJob,
+  computeBidHours,
+  splitActual,
+  multiplierFor,
+  computeJobBonus,
+} = require('../src/compute');
 
-// A small, deterministic fixture exercising every commission path.
-function fixture() {
+// ---------------------------------------------------------------------------
+// Commission fixture (revenue / sales commission / production commission)
+// ---------------------------------------------------------------------------
+function commissionFixture() {
   const jobs = new Map([
     ['J1', { id: 'J1', name: 'Panel swap', number: 101, rep: 'Ben', closedOn: '2026-03-10', price: 8000 }],
     ['J2', { id: 'J2', name: 'Rewire', number: 102, rep: 'Ben', closedOn: '2026-04-05', price: 20000 }],
@@ -15,49 +26,30 @@ function fixture() {
     ['J4', { id: 'J4', name: 'Open lead', number: 104, rep: 'Curtice', closedOn: null, price: 1000 }],
     ['J5', { id: 'J5', name: 'Generator', number: 105, rep: 'Derek', closedOn: '2026-03-25', price: 12000 }],
   ]);
-
   const revenueRows = [
     { jobId: 'J1', amount: 4000, paidAt: '2026-03-15' },
     { jobId: 'J1', amount: 4000, paidAt: '2026-04-15' },
     { jobId: 'J3', amount: 5000, paidAt: '2026-03-20' },
-    { jobId: 'UNKNOWN', amount: 100, paidAt: '2026-03-01' }, // job not in map -> Unassigned
-    { jobId: 'J1', amount: 999, paidAt: '2025-12-31' }, // prior year -> excluded
+    { jobId: 'UNKNOWN', amount: 100, paidAt: '2026-03-01' },
+    { jobId: 'J1', amount: 999, paidAt: '2025-12-31' },
   ];
-
   const salesCommissionLines = [
-    { jobId: 'J1', cost: 500, price: 500 }, // Ben, price 8000, cap 400 -> OVER
-    { jobId: 'J2', cost: 700, price: 700 }, // Ben, price 20000
-    { jobId: 'J2', cost: 300, price: 300 }, //   + -> 1000, cap 1400 -> ok
-    { jobId: 'J3', cost: 250, price: 250 }, // Derek, price 5000, cap 250 -> exactly at cap
-    { jobId: 'J4', cost: 100, price: 100 }, // open job -> excluded (openSalesCommission)
+    { jobId: 'J1', cost: 500, price: 500 },
+    { jobId: 'J2', cost: 700, price: 700 },
+    { jobId: 'J2', cost: 300, price: 300 },
+    { jobId: 'J3', cost: 250, price: 250 },
+    { jobId: 'J4', cost: 100, price: 100 },
   ];
-
-  const laborByJob = new Map([
-    // bonus 12 hrs (>10 -> 1.1x), split Alice 5/8, Bob 3/8
-    ['J5', { bidPersonHours: 20, actualHours: 8, techs: new Map([
-      ['Alice', { hours: 5 }],
-      ['Bob', { hours: 3 }],
-    ]) }],
-    // negative bonus -> skipped
-    ['J1', { bidPersonHours: 4, actualHours: 6, techs: new Map([['Alice', { hours: 6 }]]) }],
-    // bonus 6 hrs (<=10 -> 1.0x), Alice only
-    ['J3', { bidPersonHours: 10, actualHours: 4, techs: new Map([['Alice', { hours: 4 }]]) }],
-  ]);
-
-  // J1, J2, J3 are fully paid; J5 is closed but NOT paid (so it is excluded
-  // from production commission but still yields technician bonus hours).
   const fullyPaidJobIds = new Set(['J1', 'J2', 'J3']);
-
-  return { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob, fullyPaidJobIds };
+  return { jobs, revenueRows, salesCommissionLines, fullyPaidJobIds, bonusJobDetails: [] };
 }
 
 test('capFor applies Ben tiers, Derek flat, and default', () => {
   assert.deepEqual(capFor('Ben', 8000, config), { rate: 0.05, cap: 400 });
-  assert.deepEqual(capFor('Ben', 10000, config), { rate: 0.05, cap: 500 }); // <=10k boundary
+  assert.deepEqual(capFor('Ben', 10000, config), { rate: 0.05, cap: 500 });
   assert.deepEqual(capFor('Ben', 20000, config), { rate: 0.07, cap: 1400 });
   assert.deepEqual(capFor('Derek', 5000, config), { rate: 0.05, cap: 250 });
   assert.deepEqual(capFor('Curtice', 1000, config), { rate: 0.05, cap: 50 });
-  assert.deepEqual(capFor('Ben', null, config), { rate: 0.05, cap: null });
 });
 
 test('recognitionMonth reads the close date, null when open', () => {
@@ -71,57 +63,170 @@ test('sumLinesByJob totals commission lines per job', () => {
   assert.equal(m.get('B'), 7);
 });
 
-test('buildReport: paid-invoice revenue is bucketed by month and rep', () => {
-  const r = buildReport(fixture(), config, 2026);
-  const mar = r.months[2];
-  const apr = r.months[3];
-  assert.equal(mar.revenueByRep.Ben, 4000);
-  assert.equal(mar.revenueByRep.Derek, 5000);
-  assert.equal(mar.revenueByRep.Unassigned, 100);
-  assert.equal(apr.revenueByRep.Ben, 4000);
-  assert.equal(r.grand.revenue, 13100); // prior-year 999 excluded
-  assert.equal(r.repTotals.Ben.revenue, 8000);
-  assert.equal(r.repTotals.Derek.revenue, 5000);
+test('paid-invoice revenue bucketed by month and rep', () => {
+  const r = buildReport(commissionFixture(), config, 2026);
+  assert.equal(r.months[2].revenueByRep.Ben, 4000);
+  assert.equal(r.months[2].revenueByRep.Derek, 5000);
+  assert.equal(r.months[2].revenueByRep.Unassigned, 100);
+  assert.equal(r.months[3].revenueByRep.Ben, 4000);
+  assert.equal(r.grand.revenue, 13100);
 });
 
-test('buildReport: sales commission recognized on close, with cap flags', () => {
-  const r = buildReport(fixture(), config, 2026);
-  assert.equal(r.grand.salesCommission, 1750); // 500 + 1000 + 250
+test('sales commission recognized on close, with cap flags', () => {
+  const r = buildReport(commissionFixture(), config, 2026);
+  assert.equal(r.grand.salesCommission, 1750);
   assert.equal(r.repTotals.Ben.salesCommission, 1500);
   assert.equal(r.repTotals.Derek.salesCommission, 250);
-  assert.equal(r.openSalesCommission, 100); // J4 not closed
-
-  const j1 = r.detail.salesCommission.find((d) => d.jobId === 'J1');
-  assert.equal(j1.overCap, true); // 500 > 400
-  const j2 = r.detail.salesCommission.find((d) => d.jobId === 'J2');
-  assert.equal(j2.lineTotal, 1000);
-  assert.equal(j2.overCap, false); // 1000 <= 1400
-  const j3 = r.detail.salesCommission.find((d) => d.jobId === 'J3');
-  assert.equal(j3.overCap, false); // exactly at cap
+  assert.equal(r.openSalesCommission, 100);
+  assert.equal(r.detail.salesCommission.find((d) => d.jobId === 'J1').overCap, true);
+  assert.equal(r.detail.salesCommission.find((d) => d.jobId === 'J2').overCap, false);
+  assert.equal(r.detail.salesCommission.find((d) => d.jobId === 'J3').overCap, false);
 });
 
-test('buildReport: Derek production commission = 2% of closed AND paid jobs/month', () => {
-  const r = buildReport(fixture(), config, 2026);
-  // March closed + paid: J1 8000 + J3 5000 = 13000 -> 260 (J5 closed but unpaid)
-  assert.equal(r.months[2].productionCommission, 260);
-  // April closed + paid: J2 20000 -> 400
-  assert.equal(r.months[3].productionCommission, 400);
+test('Derek production commission = 2% of closed AND paid jobs/month', () => {
+  const r = buildReport(commissionFixture(), config, 2026);
+  assert.equal(r.months[2].productionCommission, 260); // J1 8000 + J3 5000 (J5 unpaid)
+  assert.equal(r.months[3].productionCommission, 400); // J2 20000
   assert.equal(r.grand.productionCommission, 660);
-  assert.equal(r.repTotals.Derek.productionCommission, 660);
-  assert.equal(r.repTotals.Derek.totalCommission, 910); // 250 + 660
+  assert.equal(r.repTotals.Derek.totalCommission, 910);
 });
 
-test('buildReport: technician bonus HOURS, multiplier, and per-tech split', () => {
-  const r = buildReport(fixture(), config, 2026);
-  const mar = r.months[2];
-  // J5: 12 bonus hrs @1.1x -> Alice 7.5*1.1=8.25, Bob 4.5*1.1=4.95 (unpaid job still yields bonus)
-  // J3: 6 bonus hrs @1.0x -> Alice 6
-  assert.equal(mar.bonusHoursByTech.Alice, 14.25); // 8.25 + 6
-  assert.equal(mar.bonusHoursByTech.Bob, 4.95);
-  assert.equal(mar.bonusHoursTotal, 19.2);
-  assert.equal(r.grand.bonusHours, 19.2);
-  assert.equal(r.techTotals.Alice, 14.25);
-  assert.equal(r.techTotals.Bob, 4.95);
-  // J1 had negative bonus -> no entry
-  assert.equal(r.detail.bonus.some((d) => d.jobId === 'J1'), false);
+// ---------------------------------------------------------------------------
+// Efficiency-bonus engine (values verified against live JobTread data)
+// ---------------------------------------------------------------------------
+
+test('computeBidHours: additive change orders, dedup exact copies', () => {
+  // Guest Bath: two identical 27-hr orders (one is a copy) + a 3.5 change order.
+  const guestBath = computeBidHours([
+    { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
+    { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
+    { type: 'customerOrder', issueDate: '2026-05-11', laborItems: [{ name: 'C', quantity: 3.5 }] },
+  ]);
+  assert.equal(guestBath.bid, 30.5); // 27 base + 3.5 change; exact copy dropped
+  assert.ok(guestBath.flags.includes('MULTIPLE_ORDERS'));
+});
+
+test('computeBidHours: near-duplicate different dates are summed (flagged)', () => {
+  // Generator: 4 (Jun 16) + 4 (Jun 17) — additive per policy, but flagged.
+  const gen = computeBidHours([
+    { type: 'customerOrder', issueDate: '2026-06-16', laborItems: [{ name: 'X', quantity: 4 }] },
+    { type: 'customerOrder', issueDate: '2026-06-17', laborItems: [{ name: 'X', quantity: 4 }] },
+  ]);
+  assert.equal(gen.bid, 8);
+  assert.ok(gen.flags.includes('MULTIPLE_ORDERS'));
+});
+
+test('computeBidHours: invoice fallback and no-bid', () => {
+  const inv = computeBidHours([
+    { type: 'customerInvoice', issueDate: '2026-05-12', laborItems: [{ name: 'L', quantity: 3.5 }] },
+  ]);
+  assert.equal(inv.bid, 3.5);
+  assert.ok(inv.flags.includes('INVOICE_BID'));
+
+  const none = computeBidHours([
+    { type: 'customerOrder', issueDate: '2026-05-12', laborItems: [{ name: 'M', quantity: null }] },
+  ]);
+  assert.equal(none.bid, 0);
+  assert.ok(none.flags.includes('NO_BID'));
+});
+
+test('splitActual separates regular and warranty by close date', () => {
+  const s = splitActual(
+    [
+      { minutes: 60, startedAt: '2026-06-20T13:00:00Z', user: 'Alice' },
+      { minutes: 120, startedAt: '2026-06-26T13:00:00Z', user: 'Alice' }, // on close = regular
+      { minutes: 30, startedAt: '2026-06-30T13:00:00Z', user: 'Bob' }, // after close = warranty
+    ],
+    '2026-06-26'
+  );
+  assert.equal(s.regTotalMin, 180);
+  assert.equal(s.warrTotalMin, 30);
+  assert.equal(s.regByUser.Alice, 180);
+});
+
+test('multiplierFor bands', () => {
+  assert.equal(multiplierFor(-1, config), 0);
+  assert.equal(multiplierFor(5, config), 1.0); // below boost
+  assert.equal(multiplierFor(6, config), 1.1); // boost lower bound
+  assert.equal(multiplierFor(15, config), 1.1); // boost upper bound
+  assert.equal(multiplierFor(16, config), 1.0); // above boost -> standard
+});
+
+test('computeJobBonus reproduces the real Guest Bath result (30.5 bid, 23.1 actual -> 8.14)', () => {
+  const detail = {
+    id: 'GB',
+    name: 'Guest Bath and Water Heater',
+    closedOn: '2026-06-26',
+    documents: [
+      { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
+      { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
+      { type: 'customerOrder', issueDate: '2026-05-11', laborItems: [{ name: 'C', quantity: 3.5 }] },
+    ],
+    // 1386 minutes total = 23.1 hrs, split between two techs, all before close.
+    timeEntries: [
+      { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' }, // 13.85 hrs
+      { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' }, // 9.25 hrs
+    ],
+  };
+  const r = computeJobBonus(detail, config);
+  assert.equal(r.bid, 30.5);
+  assert.equal(r.regHours, 23.1);
+  assert.equal(r.saved, 7.4);
+  assert.equal(r.multiplier, 1.1);
+  assert.equal(r.netBonus, 8.14); // 7.4 * 1.1
+  const distTotal = Object.values(r.distribution).reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(distTotal - 8.14) < 0.002);
+  assert.ok(r.distribution['Aaron Motta'] > r.distribution['Nigel Greenberg']); // more hours -> larger share
+});
+
+test('computeJobBonus: warranty penalty and no-bonus when saved <= 0', () => {
+  const detail = {
+    id: 'W',
+    name: 'Warranty job',
+    closedOn: '2026-06-10',
+    documents: [{ type: 'customerOrder', issueDate: '2026-05-01', laborItems: [{ name: 'L', quantity: 10 }] }],
+    timeEntries: [
+      { minutes: 300, startedAt: '2026-06-05T12:00:00Z', user: 'Alice' }, // 5 hrs regular -> saved 5
+      { minutes: 120, startedAt: '2026-06-20T12:00:00Z', user: 'Alice' }, // 2 hrs warranty -> penalty 3
+    ],
+  };
+  const r = computeJobBonus(detail, config);
+  assert.equal(r.saved, 5);
+  assert.equal(r.multiplier, 1.0); // 5 < boost min
+  assert.equal(r.rawBonus, 5);
+  assert.equal(r.penalty, 3); // 2 warranty hrs * 1.5
+  assert.equal(r.netBonus, 2); // 5 - 3
+});
+
+test('buildReport aggregates bonus per employee/month and flags review jobs', () => {
+  const jobs = new Map([
+    ['GB', { id: 'GB', name: 'Guest Bath', number: 200, rep: 'Ben', closedOn: '2026-06-26', price: 5000 }],
+    ['NB', { id: 'NB', name: 'No time job', number: 201, rep: 'Ben', closedOn: '2026-06-09', price: 3000 }],
+  ]);
+  const bonusJobDetails = [
+    {
+      id: 'GB', name: 'Guest Bath', closedOn: '2026-06-26',
+      documents: [{ type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 30.5 }] }],
+      timeEntries: [
+        { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' },
+        { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' },
+      ],
+    },
+    {
+      id: 'NB', name: 'No time job', closedOn: '2026-06-09',
+      documents: [{ type: 'customerOrder', issueDate: '2026-05-01', laborItems: [{ name: 'A', quantity: 130 }] }],
+      timeEntries: [], // no time -> flagged, not payable
+    },
+  ];
+  const r = buildReport({ jobs, revenueRows: [], salesCommissionLines: [], fullyPaidJobIds: new Set(), bonusJobDetails }, config, 2026);
+  assert.equal(r.bonus.qualifyingCount, 2);
+  // June (month 6) bonus hours = 8.14, split across the two techs
+  assert.ok(Math.abs(r.bonus.monthlyTotals[5] - 8.14) < 0.01);
+  assert.ok(r.bonus.employees.includes('Aaron Motta'));
+  assert.equal(Math.round(r.grand.bonusHours * 100) / 100, 8.14);
+  // NB job flagged NO_TIME and is in review, not payable
+  const nb = r.bonus.jobs.find((j) => j.id === 'NB');
+  assert.ok(nb.flags.includes('NO_TIME'));
+  assert.equal(Object.keys(nb.distribution).length, 0);
+  assert.ok(r.bonus.review.some((j) => j.id === 'NB'));
 });

@@ -1,9 +1,10 @@
-# Far Out Design — Sales & Commission Reports
+# Far Out Design — Sales, Commission & Bonus Reports
 
-Generates monthly **sales and commission reports** for Far Out Design inc directly
-from live JobTread data (the Pave JSON‑graph API). Produces an HTML dashboard and
-CSV exports for a calendar year, covering paid‑invoice revenue, sales commissions,
-Derek's production commission, and technician bonus hours.
+Generates monthly **sales, commission, and efficiency‑bonus reports** for Far Out
+Design inc directly from live JobTread data (the Pave JSON‑graph API). Produces an
+HTML dashboard and CSV exports for a calendar year, covering paid‑invoice revenue,
+sales commissions, Derek's production commission, and the technician **Efficiency
+Bonus Program** (bonus hours for finishing jobs under their labor bid).
 
 ## Quick start
 
@@ -26,7 +27,8 @@ Outputs land in `./out/`:
 | `monthly-summary.csv` | One row per month per rep (revenue + commissions) |
 | `sales-commission-detail.csv` | Every salesman‑commission line item, with cap flags |
 | `production-commission-detail.csv` | Derek's 2% production commission per month |
-| `bonus-hours-detail.csv` | Technician bonus hours per job |
+| `efficiency-bonus-by-employee.csv` | Payable bonus hours per technician per month |
+| `efficiency-bonus-jobs.csv` | Per‑job efficiency‑bonus detail, with flags |
 | `report-<year>.json` | Raw report object (only with `--json`) |
 
 ### Getting a grant key
@@ -62,21 +64,34 @@ Derek and (per policy) paid out the following month. A job qualifies once it is 
 closed (treated as completed) **and** its customer invoices are fully collected. This is
 **not** a line item — it is computed here.
 
-### Technician bonus hours
-Unused labor hours on a closed job become a technician bonus. The report outputs
-**bonus hours** — payroll multiplies them by each technician's own wage.
+### Efficiency bonus hours — *Efficiency Bonus Program*
+Technicians earn bonus **hours** for finishing a job under its bid labor hours. The
+report outputs hours; payroll multiplies by each technician's own wage.
+
+Qualifying jobs are **Sales Status "Project Awarded" and closed in the month**.
 
 ```
-bonusHours   = bidPersonHours − actualClockedHours        (per job, if positive)
-multiplier   = 1.1  if bonusHours > 10   else 1.0
-payableHours = bonusHours × multiplier
+bid        = Σ labor cost-item quantity, from the approved order
+             + additive change orders  (exact duplicate copies counted once)
+regular    = time entries dated on/before the close date
+warranty   = time entries dated after the close date
+saved      = bid − regular
+multiplier = 1.1  when 6 ≤ saved ≤ 15   else 1.0   (0 if saved ≤ 0)
+rawBonus   = max(0, saved) × multiplier
+penalty    = warranty hours × 1.5
+netBonus   = max(0, rawBonus − penalty)
 ```
 
-- **Bid person‑hours** come from labor cost‑item quantities scaled by crew size
-  (`1–4 Technician Labor` codes), falling back to the "Labor Hours" custom field.
-- **Actual hours** and **who worked** come from time entries (`minutes`, `user`).
-- When multiple technicians worked a job, the bonus hours are split in proportion to
-  the hours each clocked.
+- **Bid** uses the **"Labor" cost type**, so it captures every labor line regardless
+  of cost code. The "N Technician" text in a line name is a **label, not a multiplier**.
+- Change orders are **additive** (summed). Any job with more than one distinct order
+  is **flagged "Multiple orders — verify bid"** so the office manager can confirm the
+  bid before paying (this catches accidental duplicate re‑issues).
+- **Net bonus is split** across the technicians who logged regular time, by each one's
+  share of regular minutes.
+- Jobs are **flagged** for: no time logged, no labor bid, bid taken from an invoice,
+  no close date, actual < 50% of bid (likely unlogged time), or truncated data. Review
+  these before paying — see the "Jobs to review" section of the dashboard.
 
 ## Assumptions & knobs
 
@@ -96,7 +111,11 @@ done. The ones most worth confirming with the business:
    line item; it only flags lines above the policy cap.
 4. **Bonus is reported in hours, not dollars.** Payroll multiplies the payable bonus
    hours by each technician's wage — wages are not read from JobTread.
-5. **Revenue = collected cash** (paid invoices), so revenue timing and
+5. **Change orders are additive**, and the bonus multiplier boosts from 6 hours saved
+   (set `efficiencyBonus.multiplier.boostMinSaved = 7` if the intended floor is 7).
+   Very large savings (> 15 hrs) fall back to ×1.0, since they usually mean unlogged
+   time rather than real efficiency.
+6. **Revenue = collected cash** (paid invoices), so revenue timing and
    commission‑on‑close timing are intentionally on different clocks.
 
 All JobTread ids (cost codes, custom fields, org) are resolved and pinned in

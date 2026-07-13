@@ -189,90 +189,140 @@ async function fetchInvoiceTotalsByJob(orgId, opts = {}) {
 }
 
 /**
- * For a set of jobs, fetch the data needed for the technician bonus-hours
- * calculation: bid labor person-hours (from labor cost-item quantities scaled
- * by crew size) and actual clocked hours per technician (from time entries).
+ * Fetch jobs that qualify for the Efficiency Bonus Program: Sales Status
+ * "Project Awarded" and closed within [start, end] (inclusive 'YYYY-MM-DD').
  *
- * Jobs are fetched in aliased batches so one request covers several jobs.
- *
- * @returns {Promise<Map<string, {bidPersonHours:number, actualHours:number,
- *   techs: Map<string,{hours:number, hourlyRate:number}>}>>}
+ * @returns {Promise<Array<{id, name, closedOn}>>}
  */
-async function fetchJobLaborAndTime(orgId, jobIds, opts = {}) {
-  const batchSize = 8;
-  const result = new Map();
+async function fetchQualifyingBonusJobs(orgId, { start, end }, opts = {}) {
+  const statusFieldId = config.customFields.salesStatus;
+  const status = config.efficiencyBonus.qualifyingSalesStatus;
+  return paginate(
+    (page) => ({
+      organization: {
+        $: { id: orgId },
+        jobs: {
+          $: {
+            size: PAGE_SIZE,
+            page,
+            where: {
+              and: [
+                ['closedOn', '>=', start],
+                ['closedOn', '<=', end],
+                [['awarded', 'count'], '>', 0],
+              ],
+            },
+            with: {
+              awarded: {
+                _: 'customFieldValues',
+                $: {
+                  where: {
+                    and: [[['customField', 'id'], statusFieldId], ['value', status]],
+                  },
+                },
+                count: {},
+              },
+            },
+          },
+          nextPage: {},
+          nodes: { id: {}, name: {}, closedOn: {} },
+        },
+      },
+    }),
+    ['organization', 'jobs'],
+    opts
+  );
+}
 
-  for (let i = 0; i < jobIds.length; i += batchSize) {
-    const batch = jobIds.slice(i, i + batchSize);
-    const fields = {};
-    batch.forEach((jobId, idx) => {
-      fields[`j${idx}`] = {
-        _: 'job',
+/**
+ * Fetch the detail needed to score one job's efficiency bonus: approved
+ * order/invoice documents with their labor cost-item quantities, plus time
+ * entries. Sets truncation flags if the API page limits were hit.
+ *
+ * @returns {Promise<{id,name,closedOn, documents:Array, timeEntries:Array,
+ *   truncatedDocuments:boolean, truncatedTime:boolean}>}
+ */
+async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
+  // Connection page size is capped at 100 by the API.
+  const CONN_SIZE = 100;
+
+  // Documents + labor cost items (one page; a job with >100 approved docs or a
+  // doc with >100 labor lines is implausible, but we flag truncation if so).
+  const docRes = await pave(
+    {
+      job: {
         $: { id: jobId },
         id: {},
-        costItems: {
-          $: { size: 300 },
+        name: {},
+        closedOn: {},
+        documents: {
+          $: {
+            size: CONN_SIZE,
+            where: {
+              and: [['type', 'in', ['customerOrder', 'customerInvoice']], ['status', 'approved']],
+            },
+          },
+          nextPage: {},
           nodes: {
-            quantity: {},
-            costCode: { id: {} },
-            customFieldValues: {
-              $: { size: 5, where: [['customField', 'id'], config.customFields.laborHours] },
-              nodes: { value: {} },
+            type: {},
+            issueDate: {},
+            costItems: {
+              $: { size: CONN_SIZE, where: [['costType', 'id'], config.laborCostTypeId] },
+              nextPage: {},
+              nodes: { name: {}, quantity: {} },
             },
           },
         },
+      },
+    },
+    opts
+  );
+
+  const job = docRes.job || {};
+  const docNodes = (job.documents && job.documents.nodes) || [];
+  let truncatedDocuments = !!(job.documents && job.documents.nextPage);
+  const documents = docNodes.map((d) => {
+    if (d.costItems && d.costItems.nextPage) truncatedDocuments = true;
+    return {
+      type: d.type,
+      issueDate: d.issueDate || null,
+      laborItems: ((d.costItems && d.costItems.nodes) || []).map((ci) => ({
+        name: ci.name,
+        quantity: ci.quantity,
+      })),
+    };
+  });
+
+  // Time entries — paginate (up to 100 per page).
+  const teNodes = await paginate(
+    (page) => ({
+      job: {
+        $: { id: jobId },
         timeEntries: {
-          $: { size: 500 },
-          nodes: {
-            minutes: {},
-            user: { name: {} },
-          },
+          $: { size: CONN_SIZE, page, sortBy: [{ field: 'startedAt', order: 'asc' }] },
+          nextPage: {},
+          nodes: { minutes: {}, startedAt: {}, user: { name: {} } },
         },
-      };
-    });
+      },
+    }),
+    ['job', 'timeEntries'],
+    opts
+  );
+  const timeEntries = teNodes.map((te) => ({
+    minutes: te.minutes,
+    startedAt: te.startedAt,
+    user: te.user && te.user.name ? te.user.name : 'Unknown',
+  }));
 
-    const res = await pave(fields, opts);
-
-    for (let idx = 0; idx < batch.length; idx++) {
-      const node = res[`j${idx}`];
-      if (!node) continue;
-      const jobId = node.id;
-
-      // Bid person-hours: sum over labor lines of quantity * crewSize.
-      // Prefer the line quantity; fall back to the "Labor Hours" custom field.
-      let bidPersonHours = 0;
-      const ci = (node.costItems && node.costItems.nodes) || [];
-      for (const line of ci) {
-        const code = line.costCode && line.costCode.id;
-        const laborDef = code && config.costCodes.labor[code];
-        if (!laborDef) continue;
-        let hours = typeof line.quantity === 'number' ? line.quantity : null;
-        if (hours == null) {
-          const cfv = (line.customFieldValues && line.customFieldValues.nodes) || [];
-          if (cfv.length && cfv[0].value != null) hours = Number(cfv[0].value);
-        }
-        if (typeof hours === 'number' && !Number.isNaN(hours)) {
-          bidPersonHours += hours * laborDef.crewSize;
-        }
-      }
-
-      // Actual clocked hours per technician (the person who did the work).
-      const techs = new Map();
-      let actualHours = 0;
-      const te = (node.timeEntries && node.timeEntries.nodes) || [];
-      for (const entry of te) {
-        const hrs = (Number(entry.minutes) || 0) / 60;
-        actualHours += hrs;
-        const name = (entry.user && entry.user.name) || 'Unknown';
-        const cur = techs.get(name) || { hours: 0 };
-        cur.hours += hrs;
-        techs.set(name, cur);
-      }
-
-      result.set(jobId, { bidPersonHours, actualHours, techs });
-    }
-  }
-  return result;
+  return {
+    id: job.id || jobId,
+    name: job.name || '(unnamed)',
+    closedOn: job.closedOn || null,
+    documents,
+    timeEntries,
+    truncatedDocuments,
+    truncatedTime: false, // time entries are fully paginated
+  };
 }
 
 module.exports = {
@@ -280,6 +330,7 @@ module.exports = {
   fetchPaidInvoiceRevenue,
   fetchCommissionLines,
   fetchInvoiceTotalsByJob,
-  fetchJobLaborAndTime,
+  fetchQualifyingBonusJobs,
+  fetchBonusJobDetail,
   PAGE_SIZE,
 };

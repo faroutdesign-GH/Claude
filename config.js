@@ -28,20 +28,26 @@ module.exports = {
     salesCommission: '22P8bPrAtCpM',
     // "Lead Commission" (02) — reported alongside for visibility.
     leadCommission: '22PaBSbbPWZ8',
-    // Labor cost codes. Their line-item `quantity` is the *bid* labor hours,
-    // and crewSize is how many technicians that code represents (so bid hours
-    // are scaled to person-hours to compare against clocked time).
-    labor: {
-      '22P6fNyvL9ih': { name: 'Hourly Labor', crewSize: 1 },
-      '22P7tc3tHm85': { name: '1 Technician Labor', crewSize: 1 },
-      '22P7tc6trfuA': { name: '2 Technician Labor', crewSize: 2 },
-      '22P7tc9RL53f': { name: '3 Technician Labor', crewSize: 3 },
-      '22P8b8ZYvj8w': { name: '4 Technician Labor', crewSize: 4 },
-    },
+    // Labor cost codes, for reference. Efficiency-bonus bid hours are derived
+    // from the "Labor" cost TYPE (laborCostTypeId) so they capture every labor
+    // line regardless of code. A line-item `quantity` is bid hours as written —
+    // the "N Technician" label is NOT a multiplier.
+    labor: [
+      '22P6fNyvL9ih', // Hourly Labor
+      '22P7tc3tHm85', // 1 Technician Labor
+      '22P7tc6trfuA', // 2 Technician Labor
+      '22P7tc9RL53f', // 3 Technician Labor
+      '22P8b8ZYvj8w', // 4 Technician Labor
+    ],
   },
+
+  // "Labor" cost TYPE — groups every labor line regardless of cost code
+  // (Hourly Labor, 1–4 Technician Labor, …). Used for efficiency-bonus bid hours.
+  laborCostTypeId: '22P6fNyvL9jH',
 
   customFields: {
     salesRep: '22PBgFev6YGS', // "Sales Rep" (option) on job
+    salesStatus: '22P6fNyvcwAk', // "Sales Status" (option) on job
     laborHours: '22PVW7L4qwNY', // "Labor Hours" (number) on costItem
   },
 
@@ -80,17 +86,43 @@ module.exports = {
     base: 'price',
   },
 
-  // Technician bonus hours: unused hours from a job's labor bid, given to the
-  // technician(s) who did the physical work. The report outputs BONUS HOURS
-  // (payroll multiplies by each technician's own wage) — not dollars.
-  //   bonusHours = max(0, bidPersonHours - actualClockedHours)   [per job]
-  // If a job's bonus hours exceed `thresholdHours`, every bonus hour on that
-  // job counts at `multiplier`; otherwise at `baseMultiplier`. Hours are split
-  // across the technicians who worked the job in proportion to hours clocked.
-  bonusHours: {
-    thresholdHours: 10,
-    multiplier: 1.1,
-    baseMultiplier: 1.0,
+  // Efficiency Bonus Program — technicians earn bonus HOURS for finishing a job
+  // under its bid labor hours. The report outputs bonus hours; payroll multiplies
+  // by each technician's own wage. Rules (confirmed with ownership):
+  //
+  //   Qualifying   = Sales Status "Project Awarded" AND closed in the month.
+  //   Bid hours    = SUM of labor cost-item quantity (Labor cost type) from the
+  //                  approved documents. Change orders are ADDITIVE — a job's
+  //                  base order plus each additional order are summed. Exact
+  //                  duplicate document copies are not double-counted, and any
+  //                  job with more than one distinct order is flagged for a
+  //                  quick manual check. The "N Technician" label in an item
+  //                  name is NOT a multiplier. Orders (customerOrder) are
+  //                  preferred; an approved invoice is a fallback if no order.
+  //   Actual (reg) = time entries dated on/before the close date.
+  //   Warranty     = time entries after the close date (penalized).
+  //   Saved        = bid − regular actual. If <= 0, no bonus.
+  //   Multiplier   = boosted between boostMinSaved..boostMaxSaved hours saved,
+  //                  otherwise standard. (Very large savings fall back to
+  //                  standard, since they usually mean unlogged time.)
+  //   Raw bonus    = max(0, saved) × multiplier
+  //   Penalty      = warranty hours × warrantyPenaltyRate
+  //   Net bonus    = max(0, raw − penalty)
+  //   Split        = by each technician's share of regular minutes.
+  efficiencyBonus: {
+    qualifyingSalesStatus: 'Project Awarded',
+    multiplier: {
+      standard: 1.0,
+      boosted: 1.1,
+      // NOTE: confirm the lower bound — the working script boosts from 6 hrs
+      // saved; if the intent is 7, change boostMinSaved to 7.
+      boostMinSaved: 6,
+      boostMaxSaved: 15,
+    },
+    warrantyPenaltyRate: 1.5,
+    // Flag a job when regular actual is below this fraction of the bid — usually
+    // a sign of unlogged time rather than real efficiency.
+    lowActualFlagRatio: 0.5,
   },
 
   // ---- Reporting window ---------------------------------------------------

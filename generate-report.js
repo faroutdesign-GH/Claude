@@ -25,7 +25,8 @@ const {
   fetchPaidInvoiceRevenue,
   fetchCommissionLines,
   fetchInvoiceTotalsByJob,
-  fetchJobLaborAndTime,
+  fetchQualifyingBonusJobs,
+  fetchBonusJobDetail,
 } = require('./src/fetch');
 const { buildReport } = require('./src/compute');
 const { renderHtml, renderCsvFiles, money } = require('./src/render');
@@ -96,18 +97,25 @@ async function main() {
   for (const [jobId, t] of invoiceTotals) if (t.fullyPaid) fullyPaidJobIds.add(jobId);
   console.error(`    ${fullyPaidJobIds.size} fully-paid jobs`);
 
-  // Jobs closed within the report year drive commission + bonus recognition.
-  const closedJobIds = [];
-  for (const job of jobs.values()) {
-    if (!job.closedOn) continue;
-    const y = Number(String(job.closedOn).slice(0, 4));
-    if (y === year) closedJobIds.push(job.id);
+  // Efficiency bonus: Project Awarded jobs closed within the year.
+  console.error('  • fetching qualifying jobs for efficiency bonus…');
+  const qualifying = await fetchQualifyingBonusJobs(
+    orgId,
+    { start: `${year}-01-01`, end: `${year}-12-31` },
+    opts
+  );
+  console.error(`    ${qualifying.length} qualifying jobs; pulling details…`);
+  const bonusJobDetails = [];
+  for (let i = 0; i < qualifying.length; i++) {
+    const detail = await fetchBonusJobDetail(orgId, qualifying[i].id, opts);
+    bonusJobDetails.push(detail);
+    if ((i + 1) % 20 === 0 || i + 1 === qualifying.length) {
+      console.error(`    [${i + 1}/${qualifying.length}]`);
+    }
   }
-  console.error(`  • fetching labor + time for ${closedJobIds.length} jobs closed in ${year}…`);
-  const laborByJob = await fetchJobLaborAndTime(orgId, closedJobIds, opts);
 
   const report = buildReport(
-    { jobs, revenueRows, salesCommissionLines, leadCommissionLines: [], laborByJob, fullyPaidJobIds },
+    { jobs, revenueRows, salesCommissionLines, fullyPaidJobIds, bonusJobDetails },
     config,
     year
   );
@@ -132,7 +140,10 @@ async function main() {
   console.log(`  Paid revenue:           ${money(report.grand.revenue)}`);
   console.log(`  Sales commission:       ${money(report.grand.salesCommission)}`);
   console.log(`  Production commission:  ${money(report.grand.productionCommission)}`);
-  console.log(`  Technician bonus hours: ${report.grand.bonusHours} hrs`);
+  console.log(`  Efficiency bonus hours: ${report.grand.bonusHours} hrs`);
+  if (report.bonus.review.length) {
+    console.log(`  (${report.bonus.review.length} bonus job(s) flagged for review)`);
+  }
   console.log('');
   for (const rep of report.reps) {
     const t = report.repTotals[rep];
