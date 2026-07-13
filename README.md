@@ -37,3 +37,15 @@ Three fixes, all verified against the live JobTread API:
    call, roughly halving the LLM cost and latency of processing each email.
 
 No JobTread mutation logic, IDs, routing rules, or the noon-due-date logic were changed.
+
+### Permit-number false positive (contractor license)
+
+Permit emails are forwarded, and the forward adds Far Out's signature at the top —
+including the Florida contractor license `EC13016150/ES12001208`. On municipality
+notices that carry no permit number in the body text (e.g. Hernando County "Permit
+Issued", where the number is only in the attached PDF), the extractor was grabbing
+that license as the permit number. Fixed two ways: the extraction prompt now tells
+the model to ignore the forwarder's signature/license and only take a municipal
+permit number, and `sanitizePermitNumber_` drops any `EC#####` / `ES#####` /
+`EC#####/ES#####` value as a backstop. When no real permit number is present it now
+falls through to "match by job number" (asks Curtice) instead of storing the license.

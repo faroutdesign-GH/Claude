@@ -119,8 +119,14 @@ function classifyAndExtract_(subj, body) {
     "Type definitions and the fields to put in \"data\" (use null for any missing field):\n" +
     "- qmerit: a Qmerit installation request (mentions Qmerit, a project #, EV charger install).\n" +
     "    data fields: project, name, phone, email, address, quoteDue\n" +
-    "- permit: a permit or inspection notification from a municipality/Accela/city.\n" +
+    "- permit: a permit or inspection notification from a municipality/county (Accela, EnerGov, HillsGovHub, etc.).\n" +
     "    data fields: permitNumber, address, status, inspectionType, inspectionDate, inspector, municipality\n" +
+    "    IMPORTANT — these emails are usually FORWARDED. IGNORE the forwarder's own signature block\n" +
+    "    (a person's name, \"Far Out Design Inc\", a phone number, and a state contractor license such as\n" +
+    "    \"EC13016150\" or \"EC13016150/ES12001208\") that sits ABOVE the \"---------- Forwarded message ---------\" line.\n" +
+    "    A permitNumber is the ID issued by the municipality/county and looks like \"HC-BTR-26-0325569\" or\n" +
+    "    \"COMELE-2026-000796\". A contractor license (EC#####, ES#####, or \"EC#####/ES#####\") is NEVER a\n" +
+    "    permit number. If the forwarded content contains no municipal permit number, set permitNumber to null.\n" +
     "- lead: a new customer job request, quote request, or service call from a person/website/platform.\n" +
     "    data fields: name, phone, email, address, jobDescription, jobType\n" +
     "    jobType must be one of: Service Call, Panel Installation, EV Charger, Generator, " +
@@ -181,6 +187,9 @@ function handleQmerit_(th, msg, j) {
 
 /* ============================ PERMIT ============================ */
 function handlePermit_(th, msg, j) {
+  // Guard: never treat Far Out's own contractor license (pulled from the forwarded
+  // signature, e.g. "EC13016150/ES12001208") as a permit number.
+  j.permitNumber = sanitizePermitNumber_(j.permitNumber);
   if (!j.permitNumber && !j.address) {
     return flagReview_(th, "Permit email but no permit number or address found. Review manually.");
   }
@@ -381,6 +390,19 @@ function updateJobPermit_(jobId, j) {
       "\nStatus: " + (j.status || j.inspectionType || "—") +
       (j.inspectionDate ? "\nInspection: " + j.inspectionDate + " " + (j.inspector || "") + " " + (j.municipality || "") : ""),
     }, createdComment: { id: {} } } });
+}
+
+function sanitizePermitNumber_(pn) {
+  // Reject values that are actually Far Out's Florida contractor license, which shows up
+  // in the forwarded email signature (e.g. "EC13016150" or "EC13016150/ES12001208").
+  // Municipal permit numbers never take that shape (they look like HC-BTR-26-0325569,
+  // COMELE-2026-000796, etc.), so this only strips false positives.
+  if (pn === null || pn === undefined) return null;
+  const s = String(pn).trim();
+  if (!s) return null;
+  if (/^E[CS]\s*\d{5,}(\s*\/\s*E[CS]\s*\d{5,})*$/i.test(s)) return null; // license, alone or EC../ES..
+  if (/E[CS]\d{5,}\s*\/\s*E[CS]\d{5,}/i.test(s)) return null;            // license embedded in a longer string
+  return s;
 }
 
 function mapPermitStatus_(s) {
