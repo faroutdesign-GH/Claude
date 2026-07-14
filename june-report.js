@@ -23,7 +23,7 @@ const path = require('path');
 
 const config = require('./config');
 const { buildReport } = require('./src/compute');
-const { renderHtml, renderCsvFiles, toCsv, money, hours } = require('./src/render');
+const { renderHtml, renderBonusHtml, renderCsvFiles, toCsv, money, hours } = require('./src/render');
 
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/june-2026-data.json'), 'utf8'));
 // Efficiency-bonus source data (re-pulled 2026-07-14 after rule corrections:
@@ -107,6 +107,9 @@ const report = buildReport(
 
 const outDir = path.join(__dirname, 'out', 'june-2026');
 fs.mkdirSync(outDir, { recursive: true });
+// Technician-only efficiency bonus report (no sales/commission content).
+fs.writeFileSync(path.join(outDir, 'june-2026-technician-bonus.html'), renderBonusHtml(report, 'June 2026'));
+// Full internal report (revenue + commissions + bonus) kept for reference.
 fs.writeFileSync(path.join(outDir, 'june-2026-commission-report.html'), renderHtml(report));
 for (const f of renderCsvFiles(report)) fs.writeFileSync(path.join(outDir, f.name), f.content);
 

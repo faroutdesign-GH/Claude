@@ -136,8 +136,11 @@ function computeJobBonus(detail, cfg) {
   const regHours = regTotalMin / 60;
   const warrHours = warrTotalMin / 60;
   const saved = bid - regHours;
-  const multiplier = multiplierFor(saved, cfg);
-  const bonusHours = round3(Math.max(0, saved) * multiplier);
+  // A job with approved time but NO consumed time is not a win — it means the
+  // time was logged incorrectly. No bonus; flagged for correction instead.
+  const noTime = regTotalMin === 0;
+  const multiplier = noTime ? 0 : multiplierFor(saved, cfg);
+  const bonusHours = noTime ? 0 : round3(Math.max(0, saved) * multiplier);
   // Warranty deduction is RECORDED, never applied automatically — ownership
   // docks it manually only when the follow-up was negligence.
   const warrantyDeduction = round3(warrHours * eb.warranty.rate);
@@ -150,7 +153,7 @@ function computeJobBonus(detail, cfg) {
   }
 
   const flags = [...bidFlags, ...splitFlags];
-  if (regTotalMin === 0) flags.push('NO_TIME');
+  if (noTime) flags.push('NO_TIME');
   if (warrTotalMin > 0) flags.push('WARRANTY_TIME');
   if (saved > 0 && bid > 0 && regHours > 0 && regHours < bid * eb.lowActualFlagRatio) {
     flags.push('CHECK_LOW_ACTUAL');

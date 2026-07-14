@@ -21,7 +21,7 @@ function ymLabel(year, month) {
 
 // Flag → { label, color }
 const FLAG_LABELS = {
-  NO_TIME: { label: 'No time logged', color: '#c0392b' },
+  NO_TIME: { label: 'No time logged — fix time entries, no bonus', color: '#c0392b' },
   NO_BID: { label: 'No approved time on budget', color: '#c0392b' },
   NO_CLOSE_DATE: { label: 'No close date', color: '#c0392b' },
   UNAPPROVED_TIME: { label: 'Unapproved bid time excluded', color: '#6b7280' },
@@ -369,4 +369,88 @@ function renderHtml(report) {
 </div>`;
 }
 
-module.exports = { renderHtml, renderCsvFiles, toCsv, money, hours };
+/**
+ * Technician-only report: the Efficiency Bonus Program with NO sales,
+ * revenue, or commission content — field technician work hours only.
+ * `periodLabel` names the period on the page (e.g. "June 2026").
+ */
+function renderBonusHtml(report, periodLabel) {
+  const eb = config.efficiencyBonus;
+  const reviewCount = report.bonus.review.length;
+  const payableJobs = report.bonus.jobs.filter((j) => j.bonusHours > 0 && Object.keys(j.distribution).length > 0).length;
+
+  const notes = [
+    `<b>Scoring is per JOB NUMBER</b>: the job's total approved time vs the job's total consumed time. Individual line items or change orders may win or lose — only the whole job's result counts.`,
+    `<b>Approved bid time</b> comes from the job budget only — Labor lines plus hour-denominated Travel lines that are bonded to an approved document. Unapproved lines (draft/denied estimates) are excluded and shown for reference.`,
+    `<b>Saved</b> = approved − consumed (regular time on/before the close date). ${eb.multiplier.boostOverSaved} hrs or less saved pays ×${eb.multiplier.standard}; over ${eb.multiplier.boostOverSaved} hrs pays ×${eb.multiplier.boosted}. Hours are split across everyone who logged regular time, by share of hours (group bonus, group loss), and paid at each technician's own wage.`,
+    `<b>Approved jobs with no consumed time earn nothing</b> — that means the time was logged incorrectly; fix the time entries and re-run.`,
+    `<b>Warranty time</b> (after the close date) is recorded at ×${eb.warranty.rate} as its own line and deducted <i>manually</i> by ownership only when the follow-up was due to negligence.`,
+  ];
+
+  return `<title>Technician Efficiency Bonus — ${esc(periodLabel)}</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1d21; --muted:#6b7280; --line:#e5e7eb; --head:#f7f8fa;
+    --accent:#0f766e; --warn-bg:#fef2f2; --warn-fg:#b91c1c; --z:#c4c9d0; --card:#f9fafb; --pos:#1a7a3c;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14171a; --fg:#e6e8eb; --muted:#9aa3ad; --line:#2a2f36; --head:#1c2126;
+      --accent:#2dd4bf; --warn-bg:#3a1e1e; --warn-fg:#fca5a5; --z:#4b525b; --card:#1a1e23; --pos:#34d399; }
+  }
+  :root[data-theme="light"]{ --bg:#ffffff; --fg:#1a1d21; --muted:#6b7280; --line:#e5e7eb; --head:#f7f8fa; --accent:#0f766e; --warn-bg:#fef2f2; --warn-fg:#b91c1c; --z:#c4c9d0; --card:#f9fafb; --pos:#1a7a3c; }
+  :root[data-theme="dark"]{ --bg:#14171a; --fg:#e6e8eb; --muted:#9aa3ad; --line:#2a2f36; --head:#1c2126; --accent:#2dd4bf; --warn-bg:#3a1e1e; --warn-fg:#fca5a5; --z:#4b525b; --card:#1a1e23; --pos:#34d399; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:32px}
+  .wrap{max-width:1150px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:17px;margin:34px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
+  .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin:6px 0}
+  th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+  thead th{background:var(--head);font-weight:600;font-size:13px}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  tfoot .total td{font-weight:700;border-top:2px solid var(--accent);background:var(--head)}
+  .sub{color:var(--muted);font-weight:400;font-size:11px}
+  .z{color:var(--z)}
+  .pos{color:var(--pos)}.neg{color:var(--warn-fg)}
+  td.warr{color:#b8860b}
+  td.jn{font-weight:600;max-width:250px;white-space:normal}
+  td.dist{font-size:12px;color:var(--muted)}
+  .chip{display:inline-block;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;margin:1px 0}
+  .chip.sm{font-size:9px;padding:1px 6px}
+  .fl{margin-top:4px}
+  .payroll{display:flex;flex-wrap:wrap;gap:12px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;min-width:170px}
+  .pname{font-weight:600;font-size:15px}
+  .phours{font-size:28px;font-weight:700;color:var(--pos);margin-top:6px}
+  .phours span{font-size:13px;color:var(--muted);font-weight:400}
+  .pjobs{font-size:12px;color:var(--muted);margin-top:2px}
+  .notes{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:13px}
+  .notes li{margin:6px 0}
+  .empty{color:var(--muted);font-style:italic}
+  .alert{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 12px;font-size:13px;margin:8px 0}
+  .pool{margin-top:10px;font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap">
+  <h1>Technician Efficiency Bonus — ${esc(periodLabel)}</h1>
+  <div class="meta">Far Out Design inc · generated ${esc(report.generatedAt)} · data pulled live from JobTread · timezone ${esc(config.timeZone)}</div>
+
+  ${reviewCount > 0 ? `<div class="alert">⚠ ${reviewCount} job${reviewCount === 1 ? '' : 's'} flagged — review before paying (see "Jobs to review").</div>` : ''}
+
+  <h2>Payroll summary — pay these hours (× each technician's wage)</h2>
+  ${bonusPayrollCards(report)}
+  <div class="pool">Total bonus pool: <b>${hours(report.grand.bonusHours)}</b> across ${payableJobs} paying job(s) of ${report.bonus.qualifyingCount} qualifying. Warranty recorded (manual deduction): <b>${report.bonus.warrantyDeductionTotal} hrs</b>.</div>
+
+  <h2>Jobs to review (${reviewCount})</h2>
+  <div class="scroll">${bonusReviewTable(report)}</div>
+
+  <h2>All qualifying jobs (${report.bonus.qualifyingCount})</h2>
+  <div class="scroll">${bonusAllJobsTable(report)}</div>
+
+  <h2>Program rules</h2>
+  <ul class="notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>
+</div>`;
+}
+
+module.exports = { renderHtml, renderBonusHtml, renderCsvFiles, toCsv, money, hours };
