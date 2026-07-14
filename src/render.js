@@ -102,8 +102,8 @@ function renderCsvFiles(report) {
 
   // 4b. Win/lose comparison per employee.
   {
-    const headers = ['Technician', 'BonusHrsWon', 'OverHrsLost', 'NetHrs'];
-    const rows = (report.bonus.employeeSummary || []).map((e) => [e.name, e.positive, e.negative, e.net]);
+    const headers = ['Technician', 'BonusHrsWon_x1.1', 'OverHrsLost_x1.0', 'WarrantyHrs_x1.5', 'NetHrs'];
+    const rows = (report.bonus.employeeSummary || []).map((e) => [e.name, e.positive, e.negative, e.warranty, e.net]);
     files.push({ name: 'efficiency-bonus-win-lose.csv', content: toCsv(headers, rows) });
   }
 
@@ -208,20 +208,26 @@ function bonusPayrollCards(report) {
 function bonusComparisonTable(report) {
   const summary = report.bonus.employeeSummary || [];
   if (summary.length === 0) return '<p class="empty">No technician hours to compare.</p>';
+  const cell = (v, sign, cls) =>
+    v ? `<span class="${cls}">${sign}${v.toFixed(3)}</span>` : '<span class="z">0</span>';
   const rows = summary
     .map((e) => {
       const netCls = e.net > 0 ? 'pos' : e.net < 0 ? 'neg' : 'z';
-      return `<tr><td>${esc(e.name)}</td><td class="num pos">${e.positive ? '+' + e.positive.toFixed(3) : '<span class="z">0</span>'}</td><td class="num neg">${
-        e.negative ? '−' + e.negative.toFixed(3) : '<span class="z">0</span>'
-      }</td><td class="num ${netCls}" style="font-weight:700">${e.net >= 0 ? '+' : '−'}${Math.abs(e.net).toFixed(3)}</td></tr>`;
+      return `<tr><td>${esc(e.name)}</td><td class="num">${cell(e.positive, '+', 'pos')}</td><td class="num">${cell(
+        e.negative, '−', 'neg'
+      )}</td><td class="num">${cell(e.warranty, '−', 'neg')}</td><td class="num ${netCls}" style="font-weight:700">${
+        e.net >= 0 ? '+' : '−'
+      }${Math.abs(e.net).toFixed(3)}</td></tr>`;
     })
     .join('');
   const tp = report.bonus.grandHours;
   const tn = report.bonus.lossHoursTotal;
-  const foot = `<tr class="total"><td>Team</td><td class="num">+${tp.toFixed(3)}</td><td class="num">−${tn.toFixed(3)}</td><td class="num">${
-    tp - tn >= 0 ? '+' : '−'
-  }${Math.abs(round3(tp - tn)).toFixed(3)}</td></tr>`;
-  return `<table><thead><tr><th>Technician</th><th class="num">Bonus hrs (won)</th><th class="num">Over hrs (lost)</th><th class="num">Net</th></tr></thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>`;
+  const tw = report.bonus.warrantyHoursTotal;
+  const tnet = round3(tp - tn - tw);
+  const foot = `<tr class="total"><td>Team</td><td class="num">+${tp.toFixed(3)}</td><td class="num">−${tn.toFixed(3)}</td><td class="num">−${tw.toFixed(
+    3
+  )}</td><td class="num">${tnet >= 0 ? '+' : '−'}${Math.abs(tnet).toFixed(3)}</td></tr>`;
+  return `<table><thead><tr><th>Technician</th><th class="num">Bonus won (×${config.efficiencyBonus.multiplier.boosted})</th><th class="num">Over (×${config.efficiencyBonus.multiplier.standard})</th><th class="num">Warranty (×${config.efficiencyBonus.warranty.rate})</th><th class="num">Net</th></tr></thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>`;
 }
 
 function round3(n) {
@@ -477,7 +483,7 @@ function renderBonusHtml(report, periodLabel) {
 
   <h2>Win / lose comparison by technician</h2>
   <div class="scroll">${bonusComparisonTable(report)}</div>
-  <div class="pool">Bonus hrs = share of hours saved on jobs finished under approved time (payable). Over hrs = share of hours over on jobs that ran long (not deducted — shown for comparison).</div>
+  <div class="pool">Bonus won = hours saved on jobs finished under approved time, ×${config.efficiencyBonus.multiplier.boosted} (this is the payable pool). Over = hours over on jobs that ran long, ×${config.efficiencyBonus.multiplier.standard}. Warranty = after-close follow-up hours, ×${config.efficiencyBonus.warranty.rate}. Over and warranty are shown for comparison — they are not deducted from pay unless ownership applies them.</div>
 
   <h2>Jobs to review (${reviewCount})</h2>
   <div class="scroll">${bonusReviewTable(report)}</div>

@@ -291,3 +291,23 @@ test('buildReport: per-employee win/lose summary', () => {
   assert.equal(bySummary.Bob.positive, 0);
   assert.ok(bySummary.Bob.net < 0);
 });
+
+test('warranty enters comparison at 1.5x, attributed to the follow-up tech', () => {
+  const detail = {
+    id: 'Wj', name: 'Warranty', number: 9, closedOn: '2026-06-10',
+    budgetItems: [{ quantity: 10, costTypeId: LABOR, unitName: 'Hours', approved: true }],
+    timeEntries: [
+      { minutes: 300, startedAt: '2026-06-05T12:00:00Z', user: 'Alice' }, // 5h regular -> saved 5, bonus 5
+      { minutes: 120, startedAt: '2026-06-20T12:00:00Z', user: 'Bob' }, // 2h warranty -> 2*1.5 = 3
+    ],
+  };
+  const r = buildReport({ jobs: new Map(), revenueRows: [], salesCommissionLines: [], fullyPaidJobIds: new Set(), bonusJobDetails: [detail] }, config, 2026);
+  const s = Object.fromEntries(r.bonus.employeeSummary.map((e) => [e.name, e]));
+  assert.equal(s.Alice.positive, 5);
+  assert.equal(s.Alice.warranty, 0);
+  assert.equal(s.Alice.net, 5);
+  assert.equal(s.Bob.warranty, 3); // 2 warranty hrs x 1.5
+  assert.equal(s.Bob.net, -3);
+  assert.equal(r.bonus.warrantyHoursTotal, 3);
+  assert.equal(r.grand.bonusHours, 5); // payable pool unaffected by warranty
+});

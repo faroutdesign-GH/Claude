@@ -95,6 +95,7 @@ function computeBidHours(budgetItems, cfg) {
 function splitActual(timeEntries, closedOn) {
   const flags = [];
   const regByUser = {};
+  const warrByUser = {};
   let regTotalMin = 0;
   let warrTotalMin = 0;
   if (!closedOn) flags.push('NO_CLOSE_DATE');
@@ -104,13 +105,14 @@ function splitActual(timeEntries, closedOn) {
     const user = te.user || 'Unknown';
     const isWarranty = !!closedOn && started > closedOn;
     if (isWarranty) {
+      addTo(warrByUser, user, mins);
       warrTotalMin += mins;
     } else {
       addTo(regByUser, user, mins);
       regTotalMin += mins;
     }
   }
-  return { regByUser, regTotalMin, warrTotalMin, flags };
+  return { regByUser, warrByUser, regTotalMin, warrTotalMin, flags };
 }
 
 /** Bonus multiplier for hours saved: > boostOverSaved pays boosted, else standard. */
@@ -128,7 +130,7 @@ function multiplierFor(saved, cfg) {
 function computeJobBonus(detail, cfg) {
   const eb = cfg.efficiencyBonus;
   const { bid, unapprovedHours, source, flags: bidFlags } = computeBidHours(detail.budgetItems || [], cfg);
-  const { regByUser, regTotalMin, warrTotalMin, flags: splitFlags } = splitActual(
+  const { regByUser, warrByUser, regTotalMin, warrTotalMin, flags: splitFlags } = splitActual(
     detail.timeEntries || [],
     detail.closedOn
   );
@@ -153,13 +155,21 @@ function computeJobBonus(detail, cfg) {
   }
 
   // Loss side (for the win/lose comparison): a job over its approved time.
-  // Raw overage hours (no multiplier), split by who worked it — a group loss.
+  // Raw overage hours at 1.0x, split by who worked it — a group loss.
   const lossHours = noTime ? 0 : saved < 0 ? round3(-saved) : 0;
   const lossDistribution = {};
   if (lossHours > 0 && regTotalMin > 0) {
     for (const [user, mins] of Object.entries(regByUser)) {
       lossDistribution[user] = round3(lossHours * (mins / regTotalMin));
     }
+  }
+
+  // Warranty side (for the comparison): after-close hours at 1.5x, attributed
+  // to whoever did the warranty follow-up. Recorded here for comparison; still
+  // only deducted from pay manually by ownership.
+  const warrantyDistribution = {};
+  for (const [user, mins] of Object.entries(warrByUser)) {
+    warrantyDistribution[user] = round3((mins / 60) * eb.warranty.rate);
   }
 
   const flags = [...bidFlags, ...splitFlags];
@@ -187,6 +197,7 @@ function computeJobBonus(detail, cfg) {
     warrantyDeduction,
     distribution,
     lossDistribution,
+    warrantyDistribution,
     regByUser: Object.fromEntries(Object.entries(regByUser).map(([u, m]) => [u, round2(m / 60)])),
     flags,
   };
@@ -294,6 +305,7 @@ function buildReport(data, cfg, year) {
     bonusJobs.push(res);
     for (const emp of Object.keys(res.distribution)) empSet.add(emp);
     for (const emp of Object.keys(res.lossDistribution)) empSet.add(emp);
+    for (const emp of Object.keys(res.warrantyDistribution)) empSet.add(emp);
   }
   const employees = [...empSet].sort();
   const byEmployeeMonth = {};
@@ -318,14 +330,23 @@ function buildReport(data, cfg, year) {
   // under approved time; negative = hours over on jobs that ran long.
   const pos = {};
   const neg = {};
-  employees.forEach((e) => { pos[e] = 0; neg[e] = 0; });
+  const warr = {};
+  employees.forEach((e) => { pos[e] = 0; neg[e] = 0; warr[e] = 0; });
   for (const res of bonusJobs) {
     if (!res.month) continue;
     for (const [emp, h] of Object.entries(res.distribution)) pos[emp] = round3(pos[emp] + h);
     for (const [emp, h] of Object.entries(res.lossDistribution)) neg[emp] = round3(neg[emp] + h);
+    for (const [emp, h] of Object.entries(res.warrantyDistribution)) warr[emp] = round3(warr[emp] + h);
   }
+  // Net = bonus won (incl. 1.1x) − over hrs (1.0x) − warranty (1.5x).
   const employeeSummary = employees
-    .map((e) => ({ name: e, positive: round3(pos[e]), negative: round3(neg[e]), net: round3(pos[e] - neg[e]) }))
+    .map((e) => ({
+      name: e,
+      positive: round3(pos[e]),
+      negative: round3(neg[e]),
+      warranty: round3(warr[e]),
+      net: round3(pos[e] - neg[e] - warr[e]),
+    }))
     .sort((a, b) => b.net - a.net);
 
   const bonusReview = bonusJobs.filter((r) => r.flags.length > 0);
@@ -338,6 +359,7 @@ function buildReport(data, cfg, year) {
     monthlyTotals: bonusMonthlyTotals,
     grandHours: bonusGrand,
     lossHoursTotal: round3(employeeSummary.reduce((s, e) => s + e.negative, 0)),
+    warrantyHoursTotal: round3(employeeSummary.reduce((s, e) => s + e.warranty, 0)),
     warrantyDeductionTotal: round3(bonusJobs.reduce((s, j) => s + (j.warrantyDeduction || 0), 0)),
     jobs: bonusJobs.sort((a, b) => (a.month || 99) - (b.month || 99) || b.bonusHours - a.bonusHours),
     review: bonusReview,
