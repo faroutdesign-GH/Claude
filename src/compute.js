@@ -51,36 +51,41 @@ function sumLinesByJob(lines) {
 // ===========================================================================
 
 /**
- * Compute bid hours from the JOB BUDGET's approved time. Approval bonds a
- * document's quantities to the budget, so the budget is the sole source of
- * truth and all approved time is additive.
+ * Compute bid hours from the JOB BUDGET's APPROVED time. A budget line is
+ * approved when it is bonded to at least one approved document — unapproved
+ * lines (draft/denied estimates) carry bid time that must NOT count.
  *
- * `budgetItems`: [{quantity, costTypeId, unitName}] — pre-filtered to the
- * Labor and Travel cost types. Labor quantities always count; Travel counts
- * only when the line's unit is Hours.
+ * `budgetItems`: [{quantity, costTypeId, unitName, approved}] — pre-filtered
+ * to the Labor and Travel cost types. Labor quantities count when approved;
+ * Travel counts when approved AND the line's unit is Hours.
  *
- * @returns {{bid:number, source:string, flags:string[]}}
+ * @returns {{bid:number, unapprovedHours:number, source:string, flags:string[]}}
  */
 function computeBidHours(budgetItems, cfg) {
   const flags = [];
   let bid = 0;
+  let unapprovedHours = 0;
   let counted = 0;
   for (const item of budgetItems || []) {
     const qty = Number(item.quantity);
     if (item.quantity == null || Number.isNaN(qty)) continue;
-    if (item.costTypeId === cfg.laborCostTypeId) {
+    const isHourLine =
+      item.costTypeId === cfg.laborCostTypeId ||
+      (item.costTypeId === cfg.travelCostTypeId && item.unitName === cfg.hoursUnitName);
+    if (!isHourLine) continue;
+    if (item.approved) {
       bid += qty;
       counted += 1;
-    } else if (item.costTypeId === cfg.travelCostTypeId && item.unitName === cfg.hoursUnitName) {
-      bid += qty;
-      counted += 1;
+    } else {
+      unapprovedHours += qty;
     }
   }
+  if (unapprovedHours > 0) flags.push('UNAPPROVED_TIME');
   if (counted === 0) {
     flags.push('NO_BID');
-    return { bid: 0, source: 'No approved time on budget', flags };
+    return { bid: 0, unapprovedHours: round2(unapprovedHours), source: 'No approved time on budget', flags };
   }
-  return { bid: round2(bid), source: 'Budget approved time', flags };
+  return { bid: round2(bid), unapprovedHours: round2(unapprovedHours), source: 'Budget approved time', flags };
 }
 
 /**
@@ -122,7 +127,7 @@ function multiplierFor(saved, cfg) {
  */
 function computeJobBonus(detail, cfg) {
   const eb = cfg.efficiencyBonus;
-  const { bid, source, flags: bidFlags } = computeBidHours(detail.budgetItems || [], cfg);
+  const { bid, unapprovedHours, source, flags: bidFlags } = computeBidHours(detail.budgetItems || [], cfg);
   const { regByUser, regTotalMin, warrTotalMin, flags: splitFlags } = splitActual(
     detail.timeEntries || [],
     detail.closedOn
@@ -157,6 +162,7 @@ function computeJobBonus(detail, cfg) {
     name: detail.name || '(unnamed)',
     closedOn: detail.closedOn || null,
     bid: round2(bid),
+    unapprovedHours,
     bidSource: source,
     regHours: round2(regHours),
     warrHours: round2(warrHours),

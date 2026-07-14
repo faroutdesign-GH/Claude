@@ -271,6 +271,14 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
             quantity: {},
             costType: { id: {} },
             unit: { name: {} },
+            // A budget line is APPROVED when it is bonded to >= 1 approved
+            // document. Unapproved lines (draft/denied estimates) are excluded
+            // from bid hours.
+            approvedDocs: {
+              _: 'documentCostItems',
+              $: { where: [['document', 'status'], 'approved'] },
+              count: {},
+            },
           },
         },
       },
@@ -285,6 +293,7 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
     quantity: ci.quantity,
     costTypeId: ci.costType && ci.costType.id,
     unitName: ci.unit && ci.unit.name ? ci.unit.name : null,
+    approved: !!(ci.approvedDocs && ci.approvedDocs.count > 0),
   }));
 
   // Time entries — paginate (up to 100 per page).

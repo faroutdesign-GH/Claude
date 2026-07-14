@@ -103,8 +103,8 @@ test('computeBidHours: budget labor + hour-denominated travel (Generator = 4.5)'
   // Generator install budget: 1 Technician Labor 4 hrs + travel 0.5 hrs.
   const gen = computeBidHours(
     [
-      { name: '1 Technician Labor Install', quantity: 4, costTypeId: LABOR, unitName: 'Hours' },
-      { name: 'travel Install', quantity: 0.5, costTypeId: TRAVEL, unitName: 'Hours' },
+      { name: '1 Technician Labor Install', quantity: 4, costTypeId: LABOR, unitName: 'Hours', approved: true },
+      { name: 'travel Install', quantity: 0.5, costTypeId: TRAVEL, unitName: 'Hours', approved: true },
     ],
     config
   );
@@ -116,10 +116,10 @@ test('computeBidHours: non-hour travel is ignored (Panel Upgrade = 15)', () => {
   // Panel Upgrade budget: labor 12 + 3; travel 13 + 9 have no Hours unit (miles).
   const panel = computeBidHours(
     [
-      { name: '1 Technician Labor', quantity: 12, costTypeId: LABOR, unitName: null },
-      { name: 'travel', quantity: 13, costTypeId: TRAVEL, unitName: null },
-      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
-      { name: 'travel', quantity: 9, costTypeId: TRAVEL, unitName: null },
+      { name: '1 Technician Labor', quantity: 12, costTypeId: LABOR, unitName: null, approved: true },
+      { name: 'travel', quantity: 13, costTypeId: TRAVEL, unitName: null, approved: true },
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null, approved: true },
+      { name: 'travel', quantity: 9, costTypeId: TRAVEL, unitName: null, approved: true },
     ],
     config
   );
@@ -129,20 +129,38 @@ test('computeBidHours: non-hour travel is ignored (Panel Upgrade = 15)', () => {
 test('computeBidHours: additive budget lines (Guest Bath = 30.5) and no-bid', () => {
   const gb = computeBidHours(
     [
-      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
-      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null },
-      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null },
-      { name: 'travel', quantity: 26, costTypeId: TRAVEL, unitName: null },
-      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null },
-      { name: 'Uncategorized Time', quantity: null, costTypeId: LABOR, unitName: null },
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null, approved: true },
+      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null, approved: true },
+      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null, approved: true },
+      { name: 'travel', quantity: 26, costTypeId: TRAVEL, unitName: null, approved: true },
+      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null, approved: true },
+      { name: 'Uncategorized Time', quantity: null, costTypeId: LABOR, unitName: null, approved: true },
     ],
     config
   );
   assert.equal(gb.bid, 30.5);
 
-  const none = computeBidHours([{ name: 'x', quantity: null, costTypeId: LABOR, unitName: null }], config);
+  const none = computeBidHours([{ name: 'x', quantity: null, costTypeId: LABOR, unitName: null, approved: true }], config);
   assert.equal(none.bid, 0);
   assert.ok(none.flags.includes('NO_BID'));
+});
+
+test('computeBidHours: UNAPPROVED lines are excluded (Chart House = 101)', () => {
+  // Chart House budget: labor 64+15+14+8 approved; an 80-hr line sits only on
+  // a DENIED order and must not count.
+  const ch = computeBidHours(
+    [
+      { name: '1 Technician Labor', quantity: 64, costTypeId: LABOR, unitName: 'Hours', approved: true },
+      { name: '1 Technician Labor', quantity: 15, costTypeId: LABOR, unitName: 'Hours', approved: true },
+      { name: '1 Technician Labor', quantity: 80, costTypeId: LABOR, unitName: 'Hours', approved: false },
+      { name: '3 Technician Labor', quantity: 14, costTypeId: LABOR, unitName: 'Hours', approved: true },
+      { name: '1 Technician Labor', quantity: 8, costTypeId: LABOR, unitName: 'Hours', approved: true },
+    ],
+    config
+  );
+  assert.equal(ch.bid, 101);
+  assert.equal(ch.unapprovedHours, 80);
+  assert.ok(ch.flags.includes('UNAPPROVED_TIME'));
 });
 
 test('splitActual separates regular and warranty by close date', () => {
@@ -174,10 +192,10 @@ test('computeJobBonus reproduces Guest Bath (30.5 approved, 26:07 consumed -> 4.
     name: 'Guest Bath and Water Heater',
     closedOn: '2026-06-26',
     budgetItems: [
-      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
-      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null },
-      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null },
-      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null },
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null, approved: true },
+      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null, approved: true },
+      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null, approved: true },
+      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null, approved: true },
     ],
     // 26:07 = 1567 minutes consumed, all before close.
     timeEntries: [
@@ -201,7 +219,7 @@ test('computeJobBonus: warranty is recorded, never deducted', () => {
     id: 'W',
     name: 'Warranty job',
     closedOn: '2026-06-10',
-    budgetItems: [{ name: 'L', quantity: 10, costTypeId: LABOR, unitName: null }],
+    budgetItems: [{ name: 'L', quantity: 10, costTypeId: LABOR, unitName: null, approved: true }],
     timeEntries: [
       { minutes: 300, startedAt: '2026-06-05T12:00:00Z', user: 'Alice' }, // 5 hrs regular -> saved 5
       { minutes: 120, startedAt: '2026-06-20T12:00:00Z', user: 'Alice' }, // 2 hrs warranty
@@ -224,7 +242,7 @@ test('buildReport aggregates bonus per employee/month and flags review jobs', ()
   const bonusJobDetails = [
     {
       id: 'GB', name: 'Guest Bath', closedOn: '2026-06-26',
-      budgetItems: [{ name: 'A', quantity: 33.1, costTypeId: LABOR, unitName: null }],
+      budgetItems: [{ name: 'A', quantity: 33.1, costTypeId: LABOR, unitName: null, approved: true }],
       timeEntries: [
         { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' }, // 13.85
         { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' }, // 9.25
@@ -232,7 +250,7 @@ test('buildReport aggregates bonus per employee/month and flags review jobs', ()
     },
     {
       id: 'NB', name: 'No time job', closedOn: '2026-06-09',
-      budgetItems: [{ name: 'A', quantity: 130, costTypeId: LABOR, unitName: null }],
+      budgetItems: [{ name: 'A', quantity: 130, costTypeId: LABOR, unitName: null, approved: true }],
       timeEntries: [], // no time -> flagged, not payable
     },
   ];

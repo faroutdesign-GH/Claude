@@ -1,47 +1,2045 @@
 {
-  "note": "Efficiency-bonus source data re-pulled live from JobTread on 2026-07-14 after rule corrections: bid = JOB BUDGET approved time only (Labor lines + Travel lines with Hours unit). items = [quantity, 'L'|'T', 'H'|null].",
-  "bonusDetails": [
-    {"id":"22PAMgj86Fqh","items":[[0,"T",null],[16,"L","H"],[4,"T","H"]],"tes":[[532,"2026-03-19","Aaron Motta"],[530,"2026-03-19","Nigel Greenberg"],[48,"2026-04-23","Nigel Greenberg"],[48,"2026-04-23","Aaron Motta"],[446,"2026-04-23","Nigel Greenberg"],[447,"2026-04-23","Aaron Motta"],[38,"2026-04-23","Nigel Greenberg"],[39,"2026-04-23","Aaron Motta"],[24,"2026-05-19","Nigel Greenberg"],[79,"2026-05-19","Nigel Greenberg"],[28,"2026-05-21","Nigel Greenberg"],[50,"2026-05-21","Nigel Greenberg"]]},
-    {"id":"22PNXBaZwYDd","items":[[64,"L","H"],[108,"T",null],[15,"L","H"],[36,"T",null],[80,"L","H"],[132,"T",null],[14,"L","H"],[36,"T",null],[8,"L","H"],[13,"T",null]],"tes":[[192,"2026-02-19","Aaron Motta"],[370,"2026-02-20","Aaron Motta"],[381,"2026-02-23","Aaron Motta"],[483,"2026-03-05","Nigel Greenberg"],[480,"2026-03-05","Aaron Motta"],[16,"2026-03-12","Nigel Greenberg"],[8,"2026-03-12","Aaron Motta"],[393,"2026-03-12","Nigel Greenberg"],[392,"2026-03-12","Aaron Motta"],[398,"2026-03-17","Aaron Motta"],[394,"2026-03-17","Nigel Greenberg"],[11,"2026-03-25","Aaron Motta"],[510,"2026-03-25","Nigel Greenberg"],[535,"2026-03-25","Aaron Motta"],[210,"2026-04-01","Nigel Greenberg"],[210,"2026-04-01","Aaron Motta"],[11,"2026-04-06","Aaron Motta"],[246,"2026-04-06","Aaron Motta"],[19,"2026-04-17","Nigel Greenberg"],[378,"2026-04-17","Nigel Greenberg"],[20,"2026-04-17","Aaron Motta"],[313,"2026-04-17","Aaron Motta"],[372,"2026-04-17","Ben- Project Manager"],[31,"2026-06-02","Aaron Motta"],[98,"2026-06-02","Aaron Motta"],[0,"2026-06-11","Curtice Jarvis"],[34,"2026-06-11","Curtice Jarvis"],[41,"2026-06-11","Curtice Jarvis"],[8,"2026-06-11","Curtice Jarvis"]]},
-    {"id":"22PQzqbEb9Re","items":[[10,"L",null],[15,"T",null]],"tes":[[3,"2026-06-11","Nigel Greenberg"],[63,"2026-06-11","Nigel Greenberg"]]},
-    {"id":"22PSLbDRX3mZ","items":[],"tes":[]},
-    {"id":"22PScua6gNFa","items":[[3,"L",null],[4,"L",null],[20,"L",null],[26,"T",null],[3.5,"L","H"],[10,"T",null],[null,"L",null]],"tes":[[33,"2026-05-06","Nigel Greenberg"],[349,"2026-05-06","Nigel Greenberg"],[29,"2026-05-06","Aaron Motta"],[233,"2026-05-06","Aaron Motta"],[31,"2026-05-06","Aaron Motta"],[40,"2026-05-06","Nigel Greenberg"],[162,"2026-05-08","Nigel Greenberg"],[20,"2026-05-08","Nigel Greenberg"],[39,"2026-05-12","Aaron Motta"],[81,"2026-05-12","Aaron Motta"],[63,"2026-05-19","Ben- Project Manager"],[176,"2026-06-10","Nigel Greenberg"],[4,"2026-06-16","Nigel Greenberg"],[66,"2026-06-16","Nigel Greenberg"],[1,"2026-06-26","Nigel Greenberg"],[21,"2026-06-26","Nigel Greenberg"],[38,"2026-06-26","Nigel Greenberg"],[181,"2026-04-23","Ben- Project Manager"]]},
-    {"id":"22PTDmBRESet","items":[[8,"L","H"],[24,"T",null]],"tes":[[194,"2026-03-31","Nigel Greenberg"]]},
-    {"id":"22PTujeATg7W","items":[[8,"L","H"],[22,"T",null],[null,"L",null]],"tes":[[33,"2026-06-17","Nigel Greenberg"],[154,"2026-06-17","Nigel Greenberg"],[61,"2026-06-17","Aaron Motta"],[285,"2026-05-22","Curtice Jarvis"],[285,"2026-05-22","Ben- Project Manager"]]},
-    {"id":"22PVK9JJhC3V","items":[[3,"L",null],[15,"T",null],[5,"L",null],[13,"T",null],[15,"T",null],[14,"L",null],[null,"L",null],[20,"L",null],[1.2,"T","H"]],"tes":[[42,"2026-05-14","Nigel Greenberg"],[425,"2026-05-14","Nigel Greenberg"],[26,"2026-05-14","Nigel Greenberg"],[416,"2026-05-15","Nigel Greenberg"],[29,"2026-05-15","Nigel Greenberg"],[24,"2026-05-18","Nigel Greenberg"],[73,"2026-05-18","Nigel Greenberg"],[30,"2026-05-15","Nigel Greenberg"]]},
-    {"id":"22PVVVu4JD5C","items":[[2,"L",null],[13,"T",null]],"tes":[[3,"2026-06-05","Aaron Motta"],[102,"2026-06-05","Aaron Motta"]]},
-    {"id":"22PVbRKFt2DQ","items":[[4,"L",null],[10,"T",null],[null,"T",null]],"tes":[]},
-    {"id":"22PVezaVqPPA","items":[[11,"L",null],[13,"T",null]],"tes":[[8,"2026-04-30","Aaron Motta"],[539,"2026-04-30","Nigel Greenberg"],[539,"2026-04-30","Aaron Motta"],[13,"2026-04-30","Nigel Greenberg"],[13,"2026-04-30","Aaron Motta"],[245,"2026-05-11","Nigel Greenberg"],[304,"2026-05-13","Nigel Greenberg"],[10,"2026-05-13","Nigel Greenberg"],[13,"2026-06-09","Nigel Greenberg"],[241,"2026-06-09","Nigel Greenberg"],[60,"2026-06-10","Nigel Greenberg"],[7,"2026-06-10","Nigel Greenberg"]]},
-    {"id":"22PVxhvrqQa8","items":[[2,"L",null],[3.18,"T",null]],"tes":[[15,"2026-04-22","Aaron Motta"],[33,"2026-04-22","Aaron Motta"],[244,"2026-04-22","Aaron Motta"]]},
-    {"id":"22PVyHh53AQs","items":[[5,"L",null],[18,"T",null]],"tes":[[20,"2026-05-04","Nigel Greenberg"],[168,"2026-05-04","Nigel Greenberg"],[72,"2026-06-08","Ben- Project Manager"]]},
-    {"id":"22PW93TWKjMF","items":[[12,"L",null],[13,"T",null],[3,"L",null],[9,"T",null]],"tes":[[5,"2026-05-20","Nigel Greenberg"],[562,"2026-05-20","Nigel Greenberg"],[198,"2026-05-20","Ben- Project Manager"],[13,"2026-05-20","Nigel Greenberg"],[18,"2026-05-27","Nigel Greenberg"],[40,"2026-05-27","Aaron Motta"],[141,"2026-05-27","Nigel Greenberg"],[180,"2026-05-27","Aaron Motta"],[6,"2026-05-28","Aaron Motta"],[88,"2026-05-28","Aaron Motta"]]},
-    {"id":"22PWi52jZFv3","items":[[5,"L","H"],[9,"T",null]],"tes":[]},
-    {"id":"22PWmRwAgua3","items":[[22,"L",null],[8,"T",null],[48,"L",null],[24,"T",null],[18,"L",null],[8,"T",null],[null,"L",null]],"tes":[[18,"2026-06-05","Nigel Greenberg"],[502,"2026-06-05","Nigel Greenberg"],[38,"2026-06-05","Aaron Motta"],[367,"2026-06-05","Aaron Motta"],[28,"2026-06-05","Aaron Motta"],[23,"2026-06-08","Aaron Motta"],[36,"2026-06-08","Aaron Motta"],[232,"2026-06-08","Aaron Motta"]]},
-    {"id":"22PWtuinLsgM","items":[[0.5,"L","H"]],"tes":[]},
-    {"id":"22PXA3YNehKT","items":[[null,"L",null],[13.645,"T",null]],"tes":[[4,"2026-05-12","Aaron Motta"],[23,"2026-05-12","Aaron Motta"],[11,"2026-05-12","Aaron Motta"]]},
-    {"id":"22PXFaXmebqt","items":[[null,"L",null],[0.125,"T","H"]],"tes":[[26,"2026-05-18","Nigel Greenberg"],[100,"2026-05-18","Nigel Greenberg"]]},
-    {"id":"22PXKWFAQBz2","items":[[6,"L",null],[1,"T","H"],[2,"L","H"],[0.5,"T","H"]],"tes":[[33,"2026-05-27","Nigel Greenberg"],[35,"2026-05-27","Aaron Motta"],[184,"2026-05-27","Nigel Greenberg"],[182,"2026-05-27","Aaron Motta"],[35,"2026-06-08","Aaron Motta"],[108,"2026-06-08","Aaron Motta"]]},
-    {"id":"22PXXm9QQ5Zs","items":[[null,"L",null],[0.15,"T","H"],[2,"L","H"]],"tes":[[4,"2026-05-26","Curtice Jarvis"]]},
-    {"id":"22PXXs6NEWs5","items":[[7,"L","H"],[0.15,"T","H"]],"tes":[[25,"2026-05-29","Aaron Motta"],[416,"2026-05-29","Aaron Motta"]]},
-    {"id":"22PXXyjnjR52","items":[[10,"L","H"],[1.4,"T","H"],[1,"L","H"]],"tes":[[29,"2026-06-02","Aaron Motta"],[331,"2026-06-02","Aaron Motta"],[49,"2026-06-02","Aaron Motta"],[0,"2026-06-15","Nigel Greenberg"],[13,"2026-06-15","Nigel Greenberg"],[26,"2026-06-15","Nigel Greenberg"]]},
-    {"id":"22PXhfyXqa72","items":[[2,"L","H"],[0.15,"T","H"],[3,"L","H"],[0.15,"T","H"]],"tes":[[21,"2026-05-27","Aaron Motta"],[39,"2026-05-27","Aaron Motta"],[72,"2026-05-28","Aaron Motta"],[198,"2026-05-28","Aaron Motta"],[47,"2026-05-28","Aaron Motta"]]},
-    {"id":"22PY5AfyC769","items":[[7,"L","H"],[0.2,"T","H"]],"tes":[[26,"2026-06-08","Nigel Greenberg"],[168,"2026-06-08","Nigel Greenberg"],[155,"2026-06-08","Nigel Greenberg"]]},
-    {"id":"22PYMw6LnTNC","items":[[7,"L","H"],[2,"L",null],[1,"T","H"],[3,"L","H"],[1,"T","H"]],"tes":[[27,"2026-06-17","Aaron Motta"],[93,"2026-06-17","Aaron Motta"]]},
-    {"id":"22PYQrD9kPTb","items":[[2,"L","H"],[0.1,"T","H"]],"tes":[[119,"2026-06-09","Nigel Greenberg"]]},
-    {"id":"22PYRHCJQZMs","items":[[2,"L","H"],[0.25,"T","H"]],"tes":[[7,"2026-06-03","Aaron Motta"],[35,"2026-06-03","Aaron Motta"]]},
-    {"id":"22PYRkxAkLBA","items":[[2,"L",null],[5,"L","H"],[0.15,"T","H"],[2,"L",null],[4,"L","H"],[0.15,"T","H"],[2,"L","H"],[0.15,"T","H"]],"tes":[[14,"2026-06-10","Aaron Motta"],[235,"2026-06-10","Aaron Motta"]]},
-    {"id":"22PYUA3V6euq","items":[[1.75,"L",null],[0.8,"T","H"]],"tes":[[23,"2026-06-03","Aaron Motta"],[101,"2026-06-03","Aaron Motta"],[30,"2026-06-03","Aaron Motta"],[48,"2026-06-16","Aaron Motta"],[59,"2026-06-16","Aaron Motta"]]},
-    {"id":"22PYVkiSHBNY","items":[[3,"L","H"],[0.5,"T","H"]],"tes":[[7,"2026-06-11","Aaron Motta"],[147,"2026-06-11","Aaron Motta"]]},
-    {"id":"22PYq2TUHVzD","items":[[6.5,"L","H"],[0.15,"T","H"]],"tes":[[25,"2026-06-09","Aaron Motta"],[485,"2026-06-09","Aaron Motta"],[90,"2026-06-09","Aaron Motta"],[8,"2026-06-09","Nigel Greenberg"]]},
-    {"id":"22PYwssUbKdf","items":[[3,"L","H"],[0.6,"T","H"],[3,"L","H"]],"tes":[[20,"2026-06-16","Nigel Greenberg"],[285,"2026-06-16","Nigel Greenberg"]]},
-    {"id":"22PYxJZC5A84","items":[[6,"L","H"],[0.15,"T","H"]],"tes":[[30,"2026-06-18","Aaron Motta"],[277,"2026-06-18","Aaron Motta"],[28,"2026-06-18","Aaron Motta"]]},
-    {"id":"22PZ2idjqjJD","items":[[4,"L","H"],[0.5,"T","H"]],"tes":[[50,"2026-06-24","Ben- Project Manager"],[134,"2026-06-24","Ben- Project Manager"]]},
-    {"id":"22PZBXkQN5fq","items":[[2,"L",null],[1,"L","H"],[0.15,"T","H"]],"tes":[[17,"2026-06-12","Nigel Greenberg"],[68,"2026-06-12","Nigel Greenberg"],[11,"2026-06-22","Aaron Motta"],[9,"2026-06-22","Nigel Greenberg"],[241,"2026-06-22","Aaron Motta"],[229,"2026-06-22","Nigel Greenberg"]]},
-    {"id":"22PZBqKfWxec","items":[[1.663,"L",null],[0.251,"T","H"],[6,"L",null],[1,"T","H"]],"tes":[[45,"2026-06-15","Aaron Motta"],[29,"2026-06-15","Aaron Motta"],[36,"2026-06-22","Nigel Greenberg"],[32,"2026-06-22","Aaron Motta"],[147,"2026-06-22","Aaron Motta"],[145,"2026-06-22","Nigel Greenberg"]]},
-    {"id":"22PZD9gxyMDx","items":[[1.663,"L",null],[0.251,"T","H"]],"tes":[[25,"2026-06-19","Aaron Motta"]]},
-    {"id":"22PZFdQjxyMR","items":[[4,"L","H"],[0.7,"T","H"],[null,"L",null]],"tes":[[30,"2026-06-23","Aaron Motta"],[143,"2026-06-23","Aaron Motta"],[37,"2026-06-24","Curtice Jarvis"],[7,"2026-06-24","Curtice Jarvis"],[89,"2026-06-24","Curtice Jarvis"]]},
-    {"id":"22PZN6WFQt2F","items":[[4,"L","H"],[0.15,"T","H"]],"tes":[[21,"2026-06-23","Aaron Motta"],[133,"2026-06-23","Aaron Motta"],[11,"2026-06-23","Aaron Motta"],[33,"2026-06-24","Nigel Greenberg"],[48,"2026-06-24","Nigel Greenberg"]]},
-    {"id":"22PZeDbrgfXd","items":[[1.663,"L","H"],[0.251,"T","H"]],"tes":[[20,"2026-06-26","Nigel Greenberg"],[24,"2026-06-26","Nigel Greenberg"]]},
-    {"id":"22PZuVzfNKaf","items":[[2,"L","H"],[0.5,"T","H"]],"tes":[[31,"2026-06-30","Nigel Greenberg"],[141,"2026-06-30","Nigel Greenberg"]]}
-  ]
+ "note": "Efficiency-bonus source data re-pulled live from JobTread on 2026-07-14. Bid = JOB BUDGET APPROVED time only: a budget line counts when bonded to >=1 approved document. items = [quantity, 'L'|'T', 'H'|null, approved].",
+ "bonusDetails": [
+  {
+   "id": "22PAMgj86Fqh",
+   "items": [
+    [
+     0,
+     "T",
+     null,
+     true
+    ],
+    [
+     16,
+     "L",
+     "H",
+     true
+    ],
+    [
+     4,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     532,
+     "2026-03-19",
+     "Aaron Motta"
+    ],
+    [
+     530,
+     "2026-03-19",
+     "Nigel Greenberg"
+    ],
+    [
+     48,
+     "2026-04-23",
+     "Nigel Greenberg"
+    ],
+    [
+     48,
+     "2026-04-23",
+     "Aaron Motta"
+    ],
+    [
+     446,
+     "2026-04-23",
+     "Nigel Greenberg"
+    ],
+    [
+     447,
+     "2026-04-23",
+     "Aaron Motta"
+    ],
+    [
+     38,
+     "2026-04-23",
+     "Nigel Greenberg"
+    ],
+    [
+     39,
+     "2026-04-23",
+     "Aaron Motta"
+    ],
+    [
+     24,
+     "2026-05-19",
+     "Nigel Greenberg"
+    ],
+    [
+     79,
+     "2026-05-19",
+     "Nigel Greenberg"
+    ],
+    [
+     28,
+     "2026-05-21",
+     "Nigel Greenberg"
+    ],
+    [
+     50,
+     "2026-05-21",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PNXBaZwYDd",
+   "items": [
+    [
+     64,
+     "L",
+     "H",
+     true
+    ],
+    [
+     108,
+     "T",
+     null,
+     true
+    ],
+    [
+     15,
+     "L",
+     "H",
+     true
+    ],
+    [
+     36,
+     "T",
+     null,
+     true
+    ],
+    [
+     80,
+     "L",
+     "H",
+     false
+    ],
+    [
+     132,
+     "T",
+     null,
+     false
+    ],
+    [
+     14,
+     "L",
+     "H",
+     true
+    ],
+    [
+     36,
+     "T",
+     null,
+     true
+    ],
+    [
+     8,
+     "L",
+     "H",
+     true
+    ],
+    [
+     13,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     192,
+     "2026-02-19",
+     "Aaron Motta"
+    ],
+    [
+     370,
+     "2026-02-20",
+     "Aaron Motta"
+    ],
+    [
+     381,
+     "2026-02-23",
+     "Aaron Motta"
+    ],
+    [
+     483,
+     "2026-03-05",
+     "Nigel Greenberg"
+    ],
+    [
+     480,
+     "2026-03-05",
+     "Aaron Motta"
+    ],
+    [
+     16,
+     "2026-03-12",
+     "Nigel Greenberg"
+    ],
+    [
+     8,
+     "2026-03-12",
+     "Aaron Motta"
+    ],
+    [
+     393,
+     "2026-03-12",
+     "Nigel Greenberg"
+    ],
+    [
+     392,
+     "2026-03-12",
+     "Aaron Motta"
+    ],
+    [
+     398,
+     "2026-03-17",
+     "Aaron Motta"
+    ],
+    [
+     394,
+     "2026-03-17",
+     "Nigel Greenberg"
+    ],
+    [
+     11,
+     "2026-03-25",
+     "Aaron Motta"
+    ],
+    [
+     510,
+     "2026-03-25",
+     "Nigel Greenberg"
+    ],
+    [
+     535,
+     "2026-03-25",
+     "Aaron Motta"
+    ],
+    [
+     210,
+     "2026-04-01",
+     "Nigel Greenberg"
+    ],
+    [
+     210,
+     "2026-04-01",
+     "Aaron Motta"
+    ],
+    [
+     11,
+     "2026-04-06",
+     "Aaron Motta"
+    ],
+    [
+     246,
+     "2026-04-06",
+     "Aaron Motta"
+    ],
+    [
+     19,
+     "2026-04-17",
+     "Nigel Greenberg"
+    ],
+    [
+     378,
+     "2026-04-17",
+     "Nigel Greenberg"
+    ],
+    [
+     20,
+     "2026-04-17",
+     "Aaron Motta"
+    ],
+    [
+     313,
+     "2026-04-17",
+     "Aaron Motta"
+    ],
+    [
+     372,
+     "2026-04-17",
+     "Ben- Project Manager"
+    ],
+    [
+     31,
+     "2026-06-02",
+     "Aaron Motta"
+    ],
+    [
+     98,
+     "2026-06-02",
+     "Aaron Motta"
+    ],
+    [
+     0,
+     "2026-06-11",
+     "Curtice Jarvis"
+    ],
+    [
+     34,
+     "2026-06-11",
+     "Curtice Jarvis"
+    ],
+    [
+     41,
+     "2026-06-11",
+     "Curtice Jarvis"
+    ],
+    [
+     8,
+     "2026-06-11",
+     "Curtice Jarvis"
+    ]
+   ]
+  },
+  {
+   "id": "22PQzqbEb9Re",
+   "items": [
+    [
+     10,
+     "L",
+     null,
+     true
+    ],
+    [
+     15,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     3,
+     "2026-06-11",
+     "Nigel Greenberg"
+    ],
+    [
+     63,
+     "2026-06-11",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PSLbDRX3mZ",
+   "items": [],
+   "tes": []
+  },
+  {
+   "id": "22PScua6gNFa",
+   "items": [
+    [
+     3,
+     "L",
+     null,
+     true
+    ],
+    [
+     4,
+     "L",
+     null,
+     true
+    ],
+    [
+     20,
+     "L",
+     null,
+     true
+    ],
+    [
+     26,
+     "T",
+     null,
+     true
+    ],
+    [
+     3.5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     10,
+     "T",
+     null,
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     33,
+     "2026-05-06",
+     "Nigel Greenberg"
+    ],
+    [
+     349,
+     "2026-05-06",
+     "Nigel Greenberg"
+    ],
+    [
+     29,
+     "2026-05-06",
+     "Aaron Motta"
+    ],
+    [
+     233,
+     "2026-05-06",
+     "Aaron Motta"
+    ],
+    [
+     31,
+     "2026-05-06",
+     "Aaron Motta"
+    ],
+    [
+     40,
+     "2026-05-06",
+     "Nigel Greenberg"
+    ],
+    [
+     162,
+     "2026-05-08",
+     "Nigel Greenberg"
+    ],
+    [
+     20,
+     "2026-05-08",
+     "Nigel Greenberg"
+    ],
+    [
+     39,
+     "2026-05-12",
+     "Aaron Motta"
+    ],
+    [
+     81,
+     "2026-05-12",
+     "Aaron Motta"
+    ],
+    [
+     63,
+     "2026-05-19",
+     "Ben- Project Manager"
+    ],
+    [
+     176,
+     "2026-06-10",
+     "Nigel Greenberg"
+    ],
+    [
+     4,
+     "2026-06-16",
+     "Nigel Greenberg"
+    ],
+    [
+     66,
+     "2026-06-16",
+     "Nigel Greenberg"
+    ],
+    [
+     1,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     21,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     38,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     181,
+     "2026-04-23",
+     "Ben- Project Manager"
+    ]
+   ]
+  },
+  {
+   "id": "22PTDmBRESet",
+   "items": [
+    [
+     8,
+     "L",
+     "H",
+     true
+    ],
+    [
+     24,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     194,
+     "2026-03-31",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PTujeATg7W",
+   "items": [
+    [
+     8,
+     "L",
+     "H",
+     true
+    ],
+    [
+     22,
+     "T",
+     null,
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     33,
+     "2026-06-17",
+     "Nigel Greenberg"
+    ],
+    [
+     154,
+     "2026-06-17",
+     "Nigel Greenberg"
+    ],
+    [
+     61,
+     "2026-06-17",
+     "Aaron Motta"
+    ],
+    [
+     285,
+     "2026-05-22",
+     "Curtice Jarvis"
+    ],
+    [
+     285,
+     "2026-05-22",
+     "Ben- Project Manager"
+    ]
+   ]
+  },
+  {
+   "id": "22PVK9JJhC3V",
+   "items": [
+    [
+     3,
+     "L",
+     null,
+     true
+    ],
+    [
+     15,
+     "T",
+     null,
+     true
+    ],
+    [
+     5,
+     "L",
+     null,
+     true
+    ],
+    [
+     13,
+     "T",
+     null,
+     true
+    ],
+    [
+     15,
+     "T",
+     null,
+     true
+    ],
+    [
+     14,
+     "L",
+     null,
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     20,
+     "L",
+     null,
+     false
+    ],
+    [
+     1.2,
+     "T",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     42,
+     "2026-05-14",
+     "Nigel Greenberg"
+    ],
+    [
+     425,
+     "2026-05-14",
+     "Nigel Greenberg"
+    ],
+    [
+     26,
+     "2026-05-14",
+     "Nigel Greenberg"
+    ],
+    [
+     416,
+     "2026-05-15",
+     "Nigel Greenberg"
+    ],
+    [
+     29,
+     "2026-05-15",
+     "Nigel Greenberg"
+    ],
+    [
+     24,
+     "2026-05-18",
+     "Nigel Greenberg"
+    ],
+    [
+     73,
+     "2026-05-18",
+     "Nigel Greenberg"
+    ],
+    [
+     30,
+     "2026-05-15",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PVVVu4JD5C",
+   "items": [
+    [
+     2,
+     "L",
+     null,
+     true
+    ],
+    [
+     13,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     3,
+     "2026-06-05",
+     "Aaron Motta"
+    ],
+    [
+     102,
+     "2026-06-05",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PVbRKFt2DQ",
+   "items": [
+    [
+     4,
+     "L",
+     null,
+     true
+    ],
+    [
+     10,
+     "T",
+     null,
+     true
+    ],
+    [
+     null,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": []
+  },
+  {
+   "id": "22PVezaVqPPA",
+   "items": [
+    [
+     11,
+     "L",
+     null,
+     true
+    ],
+    [
+     13,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     8,
+     "2026-04-30",
+     "Aaron Motta"
+    ],
+    [
+     539,
+     "2026-04-30",
+     "Nigel Greenberg"
+    ],
+    [
+     539,
+     "2026-04-30",
+     "Aaron Motta"
+    ],
+    [
+     13,
+     "2026-04-30",
+     "Nigel Greenberg"
+    ],
+    [
+     13,
+     "2026-04-30",
+     "Aaron Motta"
+    ],
+    [
+     245,
+     "2026-05-11",
+     "Nigel Greenberg"
+    ],
+    [
+     304,
+     "2026-05-13",
+     "Nigel Greenberg"
+    ],
+    [
+     10,
+     "2026-05-13",
+     "Nigel Greenberg"
+    ],
+    [
+     13,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ],
+    [
+     241,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ],
+    [
+     60,
+     "2026-06-10",
+     "Nigel Greenberg"
+    ],
+    [
+     7,
+     "2026-06-10",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PVxhvrqQa8",
+   "items": [
+    [
+     2,
+     "L",
+     null,
+     true
+    ],
+    [
+     3.18,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     15,
+     "2026-04-22",
+     "Aaron Motta"
+    ],
+    [
+     33,
+     "2026-04-22",
+     "Aaron Motta"
+    ],
+    [
+     244,
+     "2026-04-22",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PVyHh53AQs",
+   "items": [
+    [
+     5,
+     "L",
+     null,
+     true
+    ],
+    [
+     18,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     20,
+     "2026-05-04",
+     "Nigel Greenberg"
+    ],
+    [
+     168,
+     "2026-05-04",
+     "Nigel Greenberg"
+    ],
+    [
+     72,
+     "2026-06-08",
+     "Ben- Project Manager"
+    ]
+   ]
+  },
+  {
+   "id": "22PW93TWKjMF",
+   "items": [
+    [
+     12,
+     "L",
+     null,
+     true
+    ],
+    [
+     13,
+     "T",
+     null,
+     true
+    ],
+    [
+     3,
+     "L",
+     null,
+     true
+    ],
+    [
+     9,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     5,
+     "2026-05-20",
+     "Nigel Greenberg"
+    ],
+    [
+     562,
+     "2026-05-20",
+     "Nigel Greenberg"
+    ],
+    [
+     198,
+     "2026-05-20",
+     "Ben- Project Manager"
+    ],
+    [
+     13,
+     "2026-05-20",
+     "Nigel Greenberg"
+    ],
+    [
+     18,
+     "2026-05-27",
+     "Nigel Greenberg"
+    ],
+    [
+     40,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     141,
+     "2026-05-27",
+     "Nigel Greenberg"
+    ],
+    [
+     180,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     6,
+     "2026-05-28",
+     "Aaron Motta"
+    ],
+    [
+     88,
+     "2026-05-28",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PWi52jZFv3",
+   "items": [
+    [
+     5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     9,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": []
+  },
+  {
+   "id": "22PWmRwAgua3",
+   "items": [
+    [
+     22,
+     "L",
+     null,
+     true
+    ],
+    [
+     8,
+     "T",
+     null,
+     true
+    ],
+    [
+     48,
+     "L",
+     null,
+     false
+    ],
+    [
+     24,
+     "T",
+     null,
+     false
+    ],
+    [
+     18,
+     "L",
+     null,
+     false
+    ],
+    [
+     8,
+     "T",
+     null,
+     false
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     18,
+     "2026-06-05",
+     "Nigel Greenberg"
+    ],
+    [
+     502,
+     "2026-06-05",
+     "Nigel Greenberg"
+    ],
+    [
+     38,
+     "2026-06-05",
+     "Aaron Motta"
+    ],
+    [
+     367,
+     "2026-06-05",
+     "Aaron Motta"
+    ],
+    [
+     28,
+     "2026-06-05",
+     "Aaron Motta"
+    ],
+    [
+     23,
+     "2026-06-08",
+     "Aaron Motta"
+    ],
+    [
+     36,
+     "2026-06-08",
+     "Aaron Motta"
+    ],
+    [
+     232,
+     "2026-06-08",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PWtuinLsgM",
+   "items": [
+    [
+     0.5,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": []
+  },
+  {
+   "id": "22PXA3YNehKT",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     13.645,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     4,
+     "2026-05-12",
+     "Aaron Motta"
+    ],
+    [
+     23,
+     "2026-05-12",
+     "Aaron Motta"
+    ],
+    [
+     11,
+     "2026-05-12",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PXFaXmebqt",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     0.125,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     26,
+     "2026-05-18",
+     "Nigel Greenberg"
+    ],
+    [
+     100,
+     "2026-05-18",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PXKWFAQBz2",
+   "items": [
+    [
+     6,
+     "L",
+     null,
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ],
+    [
+     2,
+     "L",
+     "H",
+     false
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     33,
+     "2026-05-27",
+     "Nigel Greenberg"
+    ],
+    [
+     35,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     184,
+     "2026-05-27",
+     "Nigel Greenberg"
+    ],
+    [
+     182,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     35,
+     "2026-06-08",
+     "Aaron Motta"
+    ],
+    [
+     108,
+     "2026-06-08",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PXXm9QQ5Zs",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     false
+    ],
+    [
+     2,
+     "L",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     4,
+     "2026-05-26",
+     "Curtice Jarvis"
+    ]
+   ]
+  },
+  {
+   "id": "22PXXs6NEWs5",
+   "items": [
+    [
+     7,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     25,
+     "2026-05-29",
+     "Aaron Motta"
+    ],
+    [
+     416,
+     "2026-05-29",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PXXyjnjR52",
+   "items": [
+    [
+     10,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1.4,
+     "T",
+     "H",
+     true
+    ],
+    [
+     1,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     29,
+     "2026-06-02",
+     "Aaron Motta"
+    ],
+    [
+     331,
+     "2026-06-02",
+     "Aaron Motta"
+    ],
+    [
+     49,
+     "2026-06-02",
+     "Aaron Motta"
+    ],
+    [
+     0,
+     "2026-06-15",
+     "Nigel Greenberg"
+    ],
+    [
+     13,
+     "2026-06-15",
+     "Nigel Greenberg"
+    ],
+    [
+     26,
+     "2026-06-15",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PXhfyXqa72",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     false
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     false
+    ],
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     21,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     39,
+     "2026-05-27",
+     "Aaron Motta"
+    ],
+    [
+     72,
+     "2026-05-28",
+     "Aaron Motta"
+    ],
+    [
+     198,
+     "2026-05-28",
+     "Aaron Motta"
+    ],
+    [
+     47,
+     "2026-05-28",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PY5AfyC769",
+   "items": [
+    [
+     7,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.2,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     26,
+     "2026-06-08",
+     "Nigel Greenberg"
+    ],
+    [
+     168,
+     "2026-06-08",
+     "Nigel Greenberg"
+    ],
+    [
+     155,
+     "2026-06-08",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYMw6LnTNC",
+   "items": [
+    [
+     7,
+     "L",
+     "H",
+     false
+    ],
+    [
+     2,
+     "L",
+     null,
+     false
+    ],
+    [
+     1,
+     "T",
+     "H",
+     false
+    ],
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     27,
+     "2026-06-17",
+     "Aaron Motta"
+    ],
+    [
+     93,
+     "2026-06-17",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PYQrD9kPTb",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     119,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYRHCJQZMs",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.25,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     7,
+     "2026-06-03",
+     "Aaron Motta"
+    ],
+    [
+     35,
+     "2026-06-03",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PYRkxAkLBA",
+   "items": [
+    [
+     2,
+     "L",
+     null,
+     false
+    ],
+    [
+     5,
+     "L",
+     "H",
+     false
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     false
+    ],
+    [
+     2,
+     "L",
+     null,
+     false
+    ],
+    [
+     4,
+     "L",
+     "H",
+     false
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     false
+    ],
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     14,
+     "2026-06-10",
+     "Aaron Motta"
+    ],
+    [
+     235,
+     "2026-06-10",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PYUA3V6euq",
+   "items": [
+    [
+     1.75,
+     "L",
+     null,
+     true
+    ],
+    [
+     0.8,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     23,
+     "2026-06-03",
+     "Aaron Motta"
+    ],
+    [
+     101,
+     "2026-06-03",
+     "Aaron Motta"
+    ],
+    [
+     30,
+     "2026-06-03",
+     "Aaron Motta"
+    ],
+    [
+     48,
+     "2026-06-16",
+     "Aaron Motta"
+    ],
+    [
+     59,
+     "2026-06-16",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PYVkiSHBNY",
+   "items": [
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     7,
+     "2026-06-11",
+     "Aaron Motta"
+    ],
+    [
+     147,
+     "2026-06-11",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PYq2TUHVzD",
+   "items": [
+    [
+     6.5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     25,
+     "2026-06-09",
+     "Aaron Motta"
+    ],
+    [
+     485,
+     "2026-06-09",
+     "Aaron Motta"
+    ],
+    [
+     90,
+     "2026-06-09",
+     "Aaron Motta"
+    ],
+    [
+     8,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYwssUbKdf",
+   "items": [
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.6,
+     "T",
+     "H",
+     true
+    ],
+    [
+     3,
+     "L",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     20,
+     "2026-06-16",
+     "Nigel Greenberg"
+    ],
+    [
+     285,
+     "2026-06-16",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYxJZC5A84",
+   "items": [
+    [
+     6,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     30,
+     "2026-06-18",
+     "Aaron Motta"
+    ],
+    [
+     277,
+     "2026-06-18",
+     "Aaron Motta"
+    ],
+    [
+     28,
+     "2026-06-18",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PZ2idjqjJD",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     50,
+     "2026-06-24",
+     "Ben- Project Manager"
+    ],
+    [
+     134,
+     "2026-06-24",
+     "Ben- Project Manager"
+    ]
+   ]
+  },
+  {
+   "id": "22PZBXkQN5fq",
+   "items": [
+    [
+     2,
+     "L",
+     null,
+     true
+    ],
+    [
+     1,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     17,
+     "2026-06-12",
+     "Nigel Greenberg"
+    ],
+    [
+     68,
+     "2026-06-12",
+     "Nigel Greenberg"
+    ],
+    [
+     11,
+     "2026-06-22",
+     "Aaron Motta"
+    ],
+    [
+     9,
+     "2026-06-22",
+     "Nigel Greenberg"
+    ],
+    [
+     241,
+     "2026-06-22",
+     "Aaron Motta"
+    ],
+    [
+     229,
+     "2026-06-22",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZBqKfWxec",
+   "items": [
+    [
+     1.663,
+     "L",
+     null,
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ],
+    [
+     6,
+     "L",
+     null,
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     45,
+     "2026-06-15",
+     "Aaron Motta"
+    ],
+    [
+     29,
+     "2026-06-15",
+     "Aaron Motta"
+    ],
+    [
+     36,
+     "2026-06-22",
+     "Nigel Greenberg"
+    ],
+    [
+     32,
+     "2026-06-22",
+     "Aaron Motta"
+    ],
+    [
+     147,
+     "2026-06-22",
+     "Aaron Motta"
+    ],
+    [
+     145,
+     "2026-06-22",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZD9gxyMDx",
+   "items": [
+    [
+     1.663,
+     "L",
+     null,
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     25,
+     "2026-06-19",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PZFdQjxyMR",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.7,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     30,
+     "2026-06-23",
+     "Aaron Motta"
+    ],
+    [
+     143,
+     "2026-06-23",
+     "Aaron Motta"
+    ],
+    [
+     37,
+     "2026-06-24",
+     "Curtice Jarvis"
+    ],
+    [
+     7,
+     "2026-06-24",
+     "Curtice Jarvis"
+    ],
+    [
+     89,
+     "2026-06-24",
+     "Curtice Jarvis"
+    ]
+   ]
+  },
+  {
+   "id": "22PZN6WFQt2F",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     21,
+     "2026-06-23",
+     "Aaron Motta"
+    ],
+    [
+     133,
+     "2026-06-23",
+     "Aaron Motta"
+    ],
+    [
+     11,
+     "2026-06-23",
+     "Aaron Motta"
+    ],
+    [
+     33,
+     "2026-06-24",
+     "Nigel Greenberg"
+    ],
+    [
+     48,
+     "2026-06-24",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZeDbrgfXd",
+   "items": [
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     20,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     24,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZuVzfNKaf",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     31,
+     "2026-06-30",
+     "Nigel Greenberg"
+    ],
+    [
+     141,
+     "2026-06-30",
+     "Nigel Greenberg"
+    ]
+   ]
+  }
+ ]
 }

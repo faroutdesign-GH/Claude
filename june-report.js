@@ -87,11 +87,12 @@ const bonusJobDetails = bonusData.bonusDetails.map((d) => {
     id: d.id,
     name: job ? job.name : d.id,
     closedOn: job ? job.closedOn : null,
-    budgetItems: d.items.map(([quantity, type, unit]) => ({
+    budgetItems: d.items.map(([quantity, type, unit, approved]) => ({
       name: type === 'L' ? 'Labor' : 'Travel',
       quantity,
       costTypeId: type === 'L' ? config.laborCostTypeId : config.travelCostTypeId,
       unitName: unit === 'H' ? config.hoursUnitName : null,
+      approved: !!approved,
     })),
     timeEntries: d.tes.map(([minutes, date, user]) => ({ minutes, startedAt: date, user })),
   };

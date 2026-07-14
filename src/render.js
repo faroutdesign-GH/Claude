@@ -24,6 +24,7 @@ const FLAG_LABELS = {
   NO_TIME: { label: 'No time logged', color: '#c0392b' },
   NO_BID: { label: 'No approved time on budget', color: '#c0392b' },
   NO_CLOSE_DATE: { label: 'No close date', color: '#c0392b' },
+  UNAPPROVED_TIME: { label: 'Unapproved bid time excluded', color: '#6b7280' },
   WARRANTY_TIME: { label: 'Warranty time — deduction is manual', color: '#b8860b' },
   CHECK_LOW_ACTUAL: { label: 'Actual < 50% of bid — check unlogged time', color: '#b8860b' },
   DATA_TRUNCATED: { label: 'Data truncated — verify', color: '#c0392b' },
@@ -101,10 +102,10 @@ function renderCsvFiles(report) {
 
   // 5. Efficiency bonus — per job. Warranty deduction is recorded, not applied.
   {
-    const headers = ['Month', 'Job', 'Closed', 'ApprovedBidHrs', 'ActualRegHrs', 'SavedHrs',
+    const headers = ['Month', 'Job', 'Closed', 'ApprovedBidHrs', 'UnapprovedBidHrsExcluded', 'ActualRegHrs', 'SavedHrs',
       'Multiplier', 'BonusHrs', 'WarrantyHrs', 'WarrantyDeductionIfApplied', 'Distribution', 'Flags'];
     const rows = report.bonus.jobs.map((j) => [
-      j.month ? ymLabel(report.year, j.month) : '', j.name, j.closedOn || '', j.bid, j.regHours,
+      j.month ? ymLabel(report.year, j.month) : '', j.name, j.closedOn || '', j.bid, j.unapprovedHours || 0, j.regHours,
       j.saved, j.multiplier, j.bonusHours, j.warrHours, j.warrantyDeduction,
       Object.entries(j.distribution).map(([u, h]) => `${u}: ${h}`).join('; '),
       j.flags.map((f) => (FLAG_LABELS[f] ? FLAG_LABELS[f].label : f)).join('; '),
@@ -249,9 +250,10 @@ function bonusAllJobsTable(report) {
       const warrCell = j.warrHours > 0
         ? `${j.warrHours.toFixed(2)} <span class="sub">(−${j.warrantyDeduction.toFixed(2)} if applied)</span>`
         : '<span class="z">–</span>';
-      return `<tr><td class="jn">${esc(j.name)}${chips}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${j.bid.toFixed(
-        2
-      )}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${
+      const bidCell = `${j.bid.toFixed(2)}${
+        j.unapprovedHours > 0 ? ` <span class="sub">(+${j.unapprovedHours.toFixed(2)} unappr.)</span>` : ''
+      }`;
+      return `<tr><td class="jn">${esc(j.name)}${chips}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${bidCell}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${
         j.saved >= 0 ? '+' : ''
       }${j.saved.toFixed(2)}</td><td class="num">${j.bonusHours > 0 ? 'x' + j.multiplier : '—'}</td><td class="num" style="font-weight:700">${
         payable ? '<span class="pos">+' + j.bonusHours.toFixed(3) + '</span>' : '<span class="z">not payable</span>'
