@@ -85,6 +85,7 @@ const bonusJobDetails = bonusData.bonusDetails.map((d) => {
   const job = jobs.get(d.id);
   return {
     id: d.id,
+    number: job ? job.number : null,
     name: job ? job.name : d.id,
     closedOn: job ? job.closedOn : null,
     budgetItems: d.items.map(([quantity, type, unit, approved]) => ({

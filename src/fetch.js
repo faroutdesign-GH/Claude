@@ -253,6 +253,7 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
       job: {
         $: { id: jobId },
         id: {},
+        number: {},
         name: {},
         closedOn: {},
         costItems: {
@@ -319,6 +320,7 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
 
   return {
     id: job.id || jobId,
+    number: job.number != null ? job.number : null,
     name: job.name || '(unnamed)',
     closedOn: job.closedOn || null,
     budgetItems,

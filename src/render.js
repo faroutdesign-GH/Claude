@@ -102,10 +102,10 @@ function renderCsvFiles(report) {
 
   // 5. Efficiency bonus — per job. Warranty deduction is recorded, not applied.
   {
-    const headers = ['Month', 'Job', 'Closed', 'ApprovedBidHrs', 'UnapprovedBidHrsExcluded', 'ActualRegHrs', 'SavedHrs',
+    const headers = ['Month', 'JobNumber', 'Job', 'Closed', 'ApprovedBidHrs', 'UnapprovedBidHrsExcluded', 'ActualRegHrs', 'SavedHrs',
       'Multiplier', 'BonusHrs', 'WarrantyHrs', 'WarrantyDeductionIfApplied', 'Distribution', 'Flags'];
     const rows = report.bonus.jobs.map((j) => [
-      j.month ? ymLabel(report.year, j.month) : '', j.name, j.closedOn || '', j.bid, j.unapprovedHours || 0, j.regHours,
+      j.month ? ymLabel(report.year, j.month) : '', j.number != null ? j.number : '', j.name, j.closedOn || '', j.bid, j.unapprovedHours || 0, j.regHours,
       j.saved, j.multiplier, j.bonusHours, j.warrHours, j.warrantyDeduction,
       Object.entries(j.distribution).map(([u, h]) => `${u}: ${h}`).join('; '),
       j.flags.map((f) => (FLAG_LABELS[f] ? FLAG_LABELS[f].label : f)).join('; '),
@@ -227,12 +227,12 @@ function bonusReviewTable(report) {
   const rows = review
     .map(
       (j) =>
-        `<tr><td>${esc(j.name)}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${j.bid}</td><td class="num">${j.regHours}</td><td>${j.flags
+        `<tr><td class="num">${esc(j.number != null ? j.number : '—')}</td><td>${esc(j.name)}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${j.bid}</td><td class="num">${j.regHours}</td><td>${j.flags
           .map((f) => flagChip(f, false))
           .join(' ')}</td></tr>`
     )
     .join('');
-  return `<table><thead><tr><th>Job</th><th>Closed</th><th class="num">Bid</th><th class="num">Actual</th><th>Flag</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th class="num">Job #</th><th>Job</th><th>Closed</th><th class="num">Bid</th><th class="num">Actual</th><th>Flag</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function bonusAllJobsTable(report) {
@@ -253,14 +253,14 @@ function bonusAllJobsTable(report) {
       const bidCell = `${j.bid.toFixed(2)}${
         j.unapprovedHours > 0 ? ` <span class="sub">(+${j.unapprovedHours.toFixed(2)} unappr.)</span>` : ''
       }`;
-      return `<tr><td class="jn">${esc(j.name)}${chips}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${bidCell}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${
+      return `<tr><td class="num">${esc(j.number != null ? j.number : '-')}</td><td class="jn">${esc(j.name)}${chips}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${bidCell}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${
         j.saved >= 0 ? '+' : ''
       }${j.saved.toFixed(2)}</td><td class="num">${j.bonusHours > 0 ? 'x' + j.multiplier : '—'}</td><td class="num" style="font-weight:700">${
         payable ? '<span class="pos">+' + j.bonusHours.toFixed(3) + '</span>' : '<span class="z">not payable</span>'
       }</td><td class="num warr">${warrCell}</td><td class="dist">${dist}</td></tr>`;
     })
     .join('');
-  return `<table><thead><tr><th>Job</th><th>Closed</th><th class="num">Approved bid</th><th class="num">Actual</th><th class="num">Saved</th><th class="num">Mult</th><th class="num">Bonus hrs</th><th class="num">Warranty (manual)</th><th>Distribution</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th class="num">Job #</th><th>Job</th><th>Closed</th><th class="num">Approved bid</th><th class="num">Actual</th><th class="num">Saved</th><th class="num">Mult</th><th class="num">Bonus hrs</th><th class="num">Warranty (manual)</th><th>Distribution</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function renderHtml(report) {

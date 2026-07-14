@@ -162,6 +162,7 @@ function computeJobBonus(detail, cfg) {
 
   return {
     id: detail.id,
+    number: detail.number != null ? detail.number : null,
     name: detail.name || '(unnamed)',
     closedOn: detail.closedOn || null,
     bid: round2(bid),
