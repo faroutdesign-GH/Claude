@@ -152,6 +152,16 @@ function computeJobBonus(detail, cfg) {
     }
   }
 
+  // Loss side (for the win/lose comparison): a job over its approved time.
+  // Raw overage hours (no multiplier), split by who worked it — a group loss.
+  const lossHours = noTime ? 0 : saved < 0 ? round3(-saved) : 0;
+  const lossDistribution = {};
+  if (lossHours > 0 && regTotalMin > 0) {
+    for (const [user, mins] of Object.entries(regByUser)) {
+      lossDistribution[user] = round3(lossHours * (mins / regTotalMin));
+    }
+  }
+
   const flags = [...bidFlags, ...splitFlags];
   if (noTime) flags.push('NO_TIME');
   if (warrTotalMin > 0) flags.push('WARRANTY_TIME');
@@ -173,8 +183,10 @@ function computeJobBonus(detail, cfg) {
     saved: round2(saved),
     multiplier,
     bonusHours,
+    lossHours,
     warrantyDeduction,
     distribution,
+    lossDistribution,
     regByUser: Object.fromEntries(Object.entries(regByUser).map(([u, m]) => [u, round2(m / 60)])),
     flags,
   };
@@ -281,6 +293,7 @@ function buildReport(data, cfg, year) {
     res.month = ym && ym.year === year ? ym.month : null;
     bonusJobs.push(res);
     for (const emp of Object.keys(res.distribution)) empSet.add(emp);
+    for (const emp of Object.keys(res.lossDistribution)) empSet.add(emp);
   }
   const employees = [...empSet].sort();
   const byEmployeeMonth = {};
@@ -300,14 +313,31 @@ function buildReport(data, cfg, year) {
     bonusGrand += employeeTotals[e];
   }
   bonusGrand = round3(bonusGrand);
+
+  // Per-employee win/lose comparison: positive = bonus hours on jobs finished
+  // under approved time; negative = hours over on jobs that ran long.
+  const pos = {};
+  const neg = {};
+  employees.forEach((e) => { pos[e] = 0; neg[e] = 0; });
+  for (const res of bonusJobs) {
+    if (!res.month) continue;
+    for (const [emp, h] of Object.entries(res.distribution)) pos[emp] = round3(pos[emp] + h);
+    for (const [emp, h] of Object.entries(res.lossDistribution)) neg[emp] = round3(neg[emp] + h);
+  }
+  const employeeSummary = employees
+    .map((e) => ({ name: e, positive: round3(pos[e]), negative: round3(neg[e]), net: round3(pos[e] - neg[e]) }))
+    .sort((a, b) => b.net - a.net);
+
   const bonusReview = bonusJobs.filter((r) => r.flags.length > 0);
 
   const bonus = {
     employees,
     byEmployeeMonth,
     employeeTotals,
+    employeeSummary,
     monthlyTotals: bonusMonthlyTotals,
     grandHours: bonusGrand,
+    lossHoursTotal: round3(employeeSummary.reduce((s, e) => s + e.negative, 0)),
     warrantyDeductionTotal: round3(bonusJobs.reduce((s, j) => s + (j.warrantyDeduction || 0), 0)),
     jobs: bonusJobs.sort((a, b) => (a.month || 99) - (b.month || 99) || b.bonusHours - a.bonusHours),
     review: bonusReview,

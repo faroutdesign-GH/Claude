@@ -100,6 +100,13 @@ function renderCsvFiles(report) {
     files.push({ name: 'efficiency-bonus-by-employee.csv', content: toCsv(headers, rows) });
   }
 
+  // 4b. Win/lose comparison per employee.
+  {
+    const headers = ['Technician', 'BonusHrsWon', 'OverHrsLost', 'NetHrs'];
+    const rows = (report.bonus.employeeSummary || []).map((e) => [e.name, e.positive, e.negative, e.net]);
+    files.push({ name: 'efficiency-bonus-win-lose.csv', content: toCsv(headers, rows) });
+  }
+
   // 5. Efficiency bonus — per job. Warranty deduction is recorded, not applied.
   {
     const headers = ['Month', 'JobNumber', 'Job', 'Closed', 'ApprovedBidHrs', 'UnapprovedBidHrsExcluded', 'ActualRegHrs', 'SavedHrs',
@@ -196,6 +203,29 @@ function bonusPayrollCards(report) {
     })
     .join('');
   return `<div class="payroll">${cards || '<p class="empty">No payable bonus hours.</p>'}</div>`;
+}
+
+function bonusComparisonTable(report) {
+  const summary = report.bonus.employeeSummary || [];
+  if (summary.length === 0) return '<p class="empty">No technician hours to compare.</p>';
+  const rows = summary
+    .map((e) => {
+      const netCls = e.net > 0 ? 'pos' : e.net < 0 ? 'neg' : 'z';
+      return `<tr><td>${esc(e.name)}</td><td class="num pos">${e.positive ? '+' + e.positive.toFixed(3) : '<span class="z">0</span>'}</td><td class="num neg">${
+        e.negative ? '−' + e.negative.toFixed(3) : '<span class="z">0</span>'
+      }</td><td class="num ${netCls}" style="font-weight:700">${e.net >= 0 ? '+' : '−'}${Math.abs(e.net).toFixed(3)}</td></tr>`;
+    })
+    .join('');
+  const tp = report.bonus.grandHours;
+  const tn = report.bonus.lossHoursTotal;
+  const foot = `<tr class="total"><td>Team</td><td class="num">+${tp.toFixed(3)}</td><td class="num">−${tn.toFixed(3)}</td><td class="num">${
+    tp - tn >= 0 ? '+' : '−'
+  }${Math.abs(round3(tp - tn)).toFixed(3)}</td></tr>`;
+  return `<table><thead><tr><th>Technician</th><th class="num">Bonus hrs (won)</th><th class="num">Over hrs (lost)</th><th class="num">Net</th></tr></thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>`;
+}
+
+function round3(n) {
+  return Math.round((n + Number.EPSILON) * 1000) / 1000;
 }
 
 function bonusByMonthTable(report) {
@@ -355,6 +385,9 @@ function renderHtml(report) {
   ${bonusPayrollCards(report)}
   <div class="scroll">${bonusByMonthTable(report)}</div>
 
+  <h2>Efficiency bonus — win / lose comparison</h2>
+  <div class="scroll">${bonusComparisonTable(report)}</div>
+
   <h2>Efficiency bonus — jobs to review (${reviewCount})</h2>
   <div class="scroll">${bonusReviewTable(report)}</div>
 
@@ -441,6 +474,10 @@ function renderBonusHtml(report, periodLabel) {
   <h2>Payroll summary — pay these hours (× each technician's wage)</h2>
   ${bonusPayrollCards(report)}
   <div class="pool">Total bonus pool: <b>${hours(report.grand.bonusHours)}</b> across ${payableJobs} paying job(s) of ${report.bonus.qualifyingCount} qualifying. Warranty recorded (manual deduction): <b>${report.bonus.warrantyDeductionTotal} hrs</b>.</div>
+
+  <h2>Win / lose comparison by technician</h2>
+  <div class="scroll">${bonusComparisonTable(report)}</div>
+  <div class="pool">Bonus hrs = share of hours saved on jobs finished under approved time (payable). Over hrs = share of hours over on jobs that ran long (not deducted — shown for comparison).</div>
 
   <h2>Jobs to review (${reviewCount})</h2>
   <div class="scroll">${bonusReviewTable(report)}</div>

@@ -264,3 +264,30 @@ test('buildReport aggregates bonus per employee/month and flags review jobs', ()
   assert.equal(Object.keys(nb.distribution).length, 0);
   assert.ok(r.bonus.review.some((j) => j.id === 'NB'));
 });
+
+test('buildReport: per-employee win/lose summary', () => {
+  const jobs = new Map();
+  const bonusJobDetails = [
+    { // WIN: 20 approved, 8 consumed -> saved 12 (>6 ->x1.1) -> 13.2 bonus, one tech
+      id: 'W', name: 'Won', number: 1, closedOn: '2026-06-10',
+      budgetItems: [{ quantity: 20, costTypeId: LABOR, unitName: 'Hours', approved: true }],
+      timeEntries: [{ minutes: 480, startedAt: '2026-06-05T12:00:00Z', user: 'Alice' }],
+    },
+    { // LOSS: 5 approved, 9 consumed -> over 4, split Alice/Bob by hours
+      id: 'L', name: 'Lost', number: 2, closedOn: '2026-06-12',
+      budgetItems: [{ quantity: 5, costTypeId: LABOR, unitName: 'Hours', approved: true }],
+      timeEntries: [
+        { minutes: 360, startedAt: '2026-06-08T12:00:00Z', user: 'Alice' }, // 6h
+        { minutes: 180, startedAt: '2026-06-08T12:00:00Z', user: 'Bob' }, // 3h
+      ], // total 9h, over 4h -> Alice 2.667, Bob 1.333
+    },
+  ];
+  const r = buildReport({ jobs, revenueRows: [], salesCommissionLines: [], fullyPaidJobIds: new Set(), bonusJobDetails }, config, 2026);
+  const bySummary = Object.fromEntries(r.bonus.employeeSummary.map((e) => [e.name, e]));
+  assert.equal(bySummary.Alice.positive, 13.2);
+  assert.ok(Math.abs(bySummary.Alice.negative - 2.667) < 0.002);
+  assert.ok(Math.abs(bySummary.Alice.net - (13.2 - 2.667)) < 0.002);
+  assert.ok(Math.abs(bySummary.Bob.negative - 1.333) < 0.002);
+  assert.equal(bySummary.Bob.positive, 0);
+  assert.ok(bySummary.Bob.net < 0);
+});
