@@ -4,10 +4,12 @@
   "description": "Sales & commission reports for Far Out Design inc, generated from live JobTread (Pave API) data.",
   "type": "commonjs",
   "bin": {
-    "farout-report": "generate-report.js"
+    "farout-report": "generate-report.js",
+    "farout-bonus": "technician-bonus.js"
   },
   "scripts": {
     "report": "node generate-report.js",
+    "bonus": "node technician-bonus.js",
     "test": "node --test"
   },
   "engines": {

@@ -19,6 +19,22 @@ npm run report               # == node generate-report.js
 node generate-report.js --year=2026 --out=out --json
 ```
 
+### Technician efficiency bonus (monthly, one command)
+
+For the **field-technician efficiency bonus only** — no sales, revenue, or
+commission content — run the dedicated monthly report straight from live data:
+
+```bash
+npm run bonus                            # last complete month
+node technician-bonus.js --year=2026 --month=6
+```
+
+It writes `technician-bonus-<year>-<mm>.html` (payroll summary, jobs-to-review,
+all qualifying jobs) plus the two `efficiency-bonus-*.csv` files to
+`./out/technician-bonus-<year>-<mm>/`. Multiply each technician's hours by their
+wage in payroll. Jobs with approved time but no logged time earn nothing and are
+flagged to fix the time entries.
+
 Outputs land in `./out/`:
 
 | File | Contents |
