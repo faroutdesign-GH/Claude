@@ -26,6 +26,11 @@ const { buildReport } = require('./src/compute');
 const { renderHtml, renderCsvFiles, toCsv, money, hours } = require('./src/render');
 
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/june-2026-data.json'), 'utf8'));
+// Efficiency-bonus source data (re-pulled 2026-07-14 after rule corrections:
+// bid = job-budget approved time only; budget Labor lines + Travel lines in Hours).
+const bonusData = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'data/june-2026-bonus-data.json'), 'utf8')
+);
 const EPS = 0.005;
 
 // ---- Jobs map with price fallback -----------------------------------------
@@ -75,17 +80,18 @@ for (const [jobId, cost] of data.commissionLines) {
   }
 }
 
-// ---- Efficiency-bonus details ----------------------------------------------
-const bonusJobDetails = data.bonusDetails.map((d) => {
+// ---- Efficiency-bonus details (job-budget approved time) -------------------
+const bonusJobDetails = bonusData.bonusDetails.map((d) => {
   const job = jobs.get(d.id);
   return {
     id: d.id,
     name: job ? job.name : d.id,
     closedOn: job ? job.closedOn : null,
-    documents: d.docs.map(([type, issueDate, qty]) => ({
-      type: type === 'order' ? 'customerOrder' : 'customerInvoice',
-      issueDate,
-      laborItems: qty == null ? [] : [{ name: 'Labor', quantity: qty }],
+    budgetItems: d.items.map(([quantity, type, unit]) => ({
+      name: type === 'L' ? 'Labor' : 'Travel',
+      quantity,
+      costTypeId: type === 'L' ? config.laborCostTypeId : config.travelCostTypeId,
+      unitName: unit === 'H' ? config.hoursUnitName : null,
     })),
     timeEntries: d.tes.map(([minutes, date, user]) => ({ minutes, startedAt: date, user })),
   };
@@ -137,5 +143,6 @@ for (const e of report.bonus.employees) {
   const h = report.bonus.byEmployeeMonth[e][5];
   if (h) console.log(`  ${e.padEnd(22)} ${h} hrs`);
 }
+console.log(`Warranty time recorded (deduction is manual): ${report.bonus.warrantyDeductionTotal} hrs at 1.5x`);
 console.log(`Bonus jobs flagged for review: ${report.bonus.review.length} of ${report.bonus.qualifyingCount}`);
 console.log(`Over-cap sales-commission lines: ${report.detail.salesCommission.filter((d) => d.overCap).length}`);

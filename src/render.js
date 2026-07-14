@@ -22,10 +22,9 @@ function ymLabel(year, month) {
 // Flag → { label, color }
 const FLAG_LABELS = {
   NO_TIME: { label: 'No time logged', color: '#c0392b' },
-  NO_BID: { label: 'No labor bid', color: '#c0392b' },
-  INVOICE_BID: { label: 'Bid from invoice', color: '#b8860b' },
+  NO_BID: { label: 'No approved time on budget', color: '#c0392b' },
   NO_CLOSE_DATE: { label: 'No close date', color: '#c0392b' },
-  MULTIPLE_ORDERS: { label: 'Multiple orders — verify bid', color: '#b8860b' },
+  WARRANTY_TIME: { label: 'Warranty time — deduction is manual', color: '#b8860b' },
   CHECK_LOW_ACTUAL: { label: 'Actual < 50% of bid — check unlogged time', color: '#b8860b' },
   DATA_TRUNCATED: { label: 'Data truncated — verify', color: '#c0392b' },
 };
@@ -100,13 +99,13 @@ function renderCsvFiles(report) {
     files.push({ name: 'efficiency-bonus-by-employee.csv', content: toCsv(headers, rows) });
   }
 
-  // 5. Efficiency bonus — per job.
+  // 5. Efficiency bonus — per job. Warranty deduction is recorded, not applied.
   {
-    const headers = ['Month', 'Job', 'Closed', 'BidHrs', 'ActualRegHrs', 'WarrantyHrs', 'SavedHrs',
-      'Multiplier', 'RawBonusHrs', 'PenaltyHrs', 'NetBonusHrs', 'Distribution', 'Flags'];
+    const headers = ['Month', 'Job', 'Closed', 'ApprovedBidHrs', 'ActualRegHrs', 'SavedHrs',
+      'Multiplier', 'BonusHrs', 'WarrantyHrs', 'WarrantyDeductionIfApplied', 'Distribution', 'Flags'];
     const rows = report.bonus.jobs.map((j) => [
       j.month ? ymLabel(report.year, j.month) : '', j.name, j.closedOn || '', j.bid, j.regHours,
-      j.warrHours, j.saved, j.multiplier, j.rawBonus, j.penalty, j.netBonus,
+      j.saved, j.multiplier, j.bonusHours, j.warrHours, j.warrantyDeduction,
       Object.entries(j.distribution).map(([u, h]) => `${u}: ${h}`).join('; '),
       j.flags.map((f) => (FLAG_LABELS[f] ? FLAG_LABELS[f].label : f)).join('; '),
     ]);
@@ -246,20 +245,20 @@ function bonusAllJobsTable(report) {
           .map(([u, h]) => `${esc(u)}: +${h}`)
           .join('<br>') || '—';
       const chips = j.flags.length ? `<div class="fl">${j.flags.map((f) => flagChip(f, true)).join(' ')}</div>` : '';
-      const netColor = j.netBonus > 0 ? '#1a7a3c' : '#999';
-      const payable = j.netBonus > 0 && Object.keys(j.distribution).length > 0;
+      const payable = j.bonusHours > 0 && Object.keys(j.distribution).length > 0;
+      const warrCell = j.warrHours > 0
+        ? `${j.warrHours.toFixed(2)} <span class="sub">(−${j.warrantyDeduction.toFixed(2)} if applied)</span>`
+        : '<span class="z">–</span>';
       return `<tr><td class="jn">${esc(j.name)}${chips}</td><td>${esc(j.closedOn || '—')}</td><td class="num">${j.bid.toFixed(
         2
-      )}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num warr">${j.warrHours.toFixed(
-        2
-      )}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${j.saved >= 0 ? '+' : ''}${j.saved.toFixed(
-        2
-      )}</td><td class="num">${j.netBonus > 0 || j.rawBonus > 0 ? 'x' + j.multiplier : '—'}</td><td class="num" style="color:${netColor};font-weight:700">${
-        payable ? '+' + j.netBonus.toFixed(3) : '<span class="z">not payable</span>'
-      }</td><td class="dist">${dist}</td></tr>`;
+      )}</td><td class="num">${j.regHours.toFixed(2)}</td><td class="num ${j.saved > 0 ? 'pos' : 'neg'}">${
+        j.saved >= 0 ? '+' : ''
+      }${j.saved.toFixed(2)}</td><td class="num">${j.bonusHours > 0 ? 'x' + j.multiplier : '—'}</td><td class="num" style="font-weight:700">${
+        payable ? '<span class="pos">+' + j.bonusHours.toFixed(3) + '</span>' : '<span class="z">not payable</span>'
+      }</td><td class="num warr">${warrCell}</td><td class="dist">${dist}</td></tr>`;
     })
     .join('');
-  return `<table><thead><tr><th>Job</th><th>Closed</th><th class="num">Bid</th><th class="num">Actual</th><th class="num">Warr</th><th class="num">Saved</th><th class="num">Mult</th><th class="num">Net bonus</th><th>Distribution</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table><thead><tr><th>Job</th><th>Closed</th><th class="num">Approved bid</th><th class="num">Actual</th><th class="num">Saved</th><th class="num">Mult</th><th class="num">Bonus hrs</th><th class="num">Warranty (manual)</th><th>Distribution</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function renderHtml(report) {
@@ -274,7 +273,8 @@ function renderHtml(report) {
     `<b>Production commission</b> is ${pc.rate * 100}% for ${esc(pc.rep)}, on the ${
       pc.scope === 'own' ? `${esc(pc.rep)}'s` : 'total'
     } price of jobs closed <i>and fully paid</i> each month (paid the following month).`,
-    `<b>Efficiency bonus hours</b> — for jobs "Project Awarded" and closed in the month: bid labor hours (summed from the approved order + additive change orders) minus regular clocked hours = hours saved. Saved hours pay at ×${eb.multiplier.boosted} between ${eb.multiplier.boostMinSaved}–${eb.multiplier.boostMaxSaved} hrs saved (else ×${eb.multiplier.standard}); warranty hours after close are penalized ×${eb.warrantyPenaltyRate}. Net is split across the technicians by their share of regular hours, and paid as <b>hours</b> at each tech's own wage.`,
+    `<b>Efficiency bonus hours</b> — for jobs "Project Awarded" and closed in the month: approved bid time from the <b>job budget only</b> (Labor lines, plus Travel lines in Hours) minus regular clocked hours = hours saved. ${eb.multiplier.boostOverSaved} hrs or less saved pays ×${eb.multiplier.standard}; over ${eb.multiplier.boostOverSaved} hrs pays ×${eb.multiplier.boosted}. Bonus is split across everyone who logged regular time, by share of hours (group bonus, group loss), and paid as <b>hours</b> at each person's own wage.`,
+    `<b>Warranty time</b> (clocked after the close date) is <b>recorded, not deducted</b> — the ×${eb.warranty.rate} deduction is shown per job and applied manually by ownership only when the follow-up was due to negligence.`,
   ];
 
   return `<title>Far Out Design — Sales, Commission &amp; Bonus Report ${report.year}</title>

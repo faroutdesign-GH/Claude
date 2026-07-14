@@ -92,40 +92,55 @@ test('Derek production commission = 2% of closed AND paid jobs/month', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Efficiency-bonus engine (values verified against live JobTread data)
+// Efficiency-bonus engine (values verified against live JobTread data and
+// confirmed by ownership: bid = job-budget approved time only)
 // ---------------------------------------------------------------------------
 
-test('computeBidHours: additive change orders, dedup exact copies', () => {
-  // Guest Bath: two identical 27-hr orders (one is a copy) + a 3.5 change order.
-  const guestBath = computeBidHours([
-    { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
-    { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
-    { type: 'customerOrder', issueDate: '2026-05-11', laborItems: [{ name: 'C', quantity: 3.5 }] },
-  ]);
-  assert.equal(guestBath.bid, 30.5); // 27 base + 3.5 change; exact copy dropped
-  assert.ok(guestBath.flags.includes('MULTIPLE_ORDERS'));
+const LABOR = config.laborCostTypeId;
+const TRAVEL = config.travelCostTypeId;
+
+test('computeBidHours: budget labor + hour-denominated travel (Generator = 4.5)', () => {
+  // Generator install budget: 1 Technician Labor 4 hrs + travel 0.5 hrs.
+  const gen = computeBidHours(
+    [
+      { name: '1 Technician Labor Install', quantity: 4, costTypeId: LABOR, unitName: 'Hours' },
+      { name: 'travel Install', quantity: 0.5, costTypeId: TRAVEL, unitName: 'Hours' },
+    ],
+    config
+  );
+  assert.equal(gen.bid, 4.5);
+  assert.equal(gen.flags.length, 0);
 });
 
-test('computeBidHours: near-duplicate different dates are summed (flagged)', () => {
-  // Generator: 4 (Jun 16) + 4 (Jun 17) — additive per policy, but flagged.
-  const gen = computeBidHours([
-    { type: 'customerOrder', issueDate: '2026-06-16', laborItems: [{ name: 'X', quantity: 4 }] },
-    { type: 'customerOrder', issueDate: '2026-06-17', laborItems: [{ name: 'X', quantity: 4 }] },
-  ]);
-  assert.equal(gen.bid, 8);
-  assert.ok(gen.flags.includes('MULTIPLE_ORDERS'));
+test('computeBidHours: non-hour travel is ignored (Panel Upgrade = 15)', () => {
+  // Panel Upgrade budget: labor 12 + 3; travel 13 + 9 have no Hours unit (miles).
+  const panel = computeBidHours(
+    [
+      { name: '1 Technician Labor', quantity: 12, costTypeId: LABOR, unitName: null },
+      { name: 'travel', quantity: 13, costTypeId: TRAVEL, unitName: null },
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
+      { name: 'travel', quantity: 9, costTypeId: TRAVEL, unitName: null },
+    ],
+    config
+  );
+  assert.equal(panel.bid, 15);
 });
 
-test('computeBidHours: invoice fallback and no-bid', () => {
-  const inv = computeBidHours([
-    { type: 'customerInvoice', issueDate: '2026-05-12', laborItems: [{ name: 'L', quantity: 3.5 }] },
-  ]);
-  assert.equal(inv.bid, 3.5);
-  assert.ok(inv.flags.includes('INVOICE_BID'));
+test('computeBidHours: additive budget lines (Guest Bath = 30.5) and no-bid', () => {
+  const gb = computeBidHours(
+    [
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
+      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null },
+      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null },
+      { name: 'travel', quantity: 26, costTypeId: TRAVEL, unitName: null },
+      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null },
+      { name: 'Uncategorized Time', quantity: null, costTypeId: LABOR, unitName: null },
+    ],
+    config
+  );
+  assert.equal(gb.bid, 30.5);
 
-  const none = computeBidHours([
-    { type: 'customerOrder', issueDate: '2026-05-12', laborItems: [{ name: 'M', quantity: null }] },
-  ]);
+  const none = computeBidHours([{ name: 'x', quantity: null, costTypeId: LABOR, unitName: null }], config);
   assert.equal(none.bid, 0);
   assert.ok(none.flags.includes('NO_BID'));
 });
@@ -144,58 +159,61 @@ test('splitActual separates regular and warranty by close date', () => {
   assert.equal(s.regByUser.Alice, 180);
 });
 
-test('multiplierFor bands', () => {
+test('multiplierFor: 6 hrs or less saved -> 1.0x, over 6 -> 1.1x (no upper band)', () => {
   assert.equal(multiplierFor(-1, config), 0);
-  assert.equal(multiplierFor(5, config), 1.0); // below boost
-  assert.equal(multiplierFor(6, config), 1.1); // boost lower bound
-  assert.equal(multiplierFor(15, config), 1.1); // boost upper bound
-  assert.equal(multiplierFor(16, config), 1.0); // above boost -> standard
+  assert.equal(multiplierFor(5, config), 1.0);
+  assert.equal(multiplierFor(6, config), 1.0); // exactly 6 -> standard
+  assert.equal(multiplierFor(6.01, config), 1.1); // over 6 -> boosted
+  assert.equal(multiplierFor(15, config), 1.1);
+  assert.equal(multiplierFor(85, config), 1.1); // no upper band
 });
 
-test('computeJobBonus reproduces the real Guest Bath result (30.5 bid, 23.1 actual -> 8.14)', () => {
+test('computeJobBonus reproduces Guest Bath (30.5 approved, 26:07 consumed -> 4.383 hrs @1.0x)', () => {
   const detail = {
     id: 'GB',
     name: 'Guest Bath and Water Heater',
     closedOn: '2026-06-26',
-    documents: [
-      { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
-      { type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 20 }, { name: 'B', quantity: 7 }] },
-      { type: 'customerOrder', issueDate: '2026-05-11', laborItems: [{ name: 'C', quantity: 3.5 }] },
+    budgetItems: [
+      { name: '1 Technician Labor', quantity: 3, costTypeId: LABOR, unitName: null },
+      { name: '1 Technician Labor', quantity: 4, costTypeId: LABOR, unitName: null },
+      { name: '2 Technician Labor', quantity: 20, costTypeId: LABOR, unitName: null },
+      { name: '1 Technician Labor', quantity: 3.5, costTypeId: LABOR, unitName: null },
     ],
-    // 1386 minutes total = 23.1 hrs, split between two techs, all before close.
+    // 26:07 = 1567 minutes consumed, all before close.
     timeEntries: [
-      { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' }, // 13.85 hrs
-      { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' }, // 9.25 hrs
+      { minutes: 950, startedAt: '2026-05-15T13:00:00Z', user: 'Nigel Greenberg' },
+      { minutes: 617, startedAt: '2026-05-16T13:00:00Z', user: 'Aaron Motta' },
     ],
   };
   const r = computeJobBonus(detail, config);
   assert.equal(r.bid, 30.5);
-  assert.equal(r.regHours, 23.1);
-  assert.equal(r.saved, 7.4);
-  assert.equal(r.multiplier, 1.1);
-  assert.equal(r.netBonus, 8.14); // 7.4 * 1.1
+  assert.equal(r.regHours, 26.12);
+  assert.equal(r.saved, 4.38);
+  assert.equal(r.multiplier, 1.0); // 4.38 <= 6 -> standard
+  assert.ok(Math.abs(r.bonusHours - 4.383) < 0.001);
   const distTotal = Object.values(r.distribution).reduce((a, b) => a + b, 0);
-  assert.ok(Math.abs(distTotal - 8.14) < 0.002);
-  assert.ok(r.distribution['Aaron Motta'] > r.distribution['Nigel Greenberg']); // more hours -> larger share
+  assert.ok(Math.abs(distTotal - r.bonusHours) < 0.002);
+  assert.ok(r.distribution['Nigel Greenberg'] > r.distribution['Aaron Motta']);
 });
 
-test('computeJobBonus: warranty penalty and no-bonus when saved <= 0', () => {
+test('computeJobBonus: warranty is recorded, never deducted', () => {
   const detail = {
     id: 'W',
     name: 'Warranty job',
     closedOn: '2026-06-10',
-    documents: [{ type: 'customerOrder', issueDate: '2026-05-01', laborItems: [{ name: 'L', quantity: 10 }] }],
+    budgetItems: [{ name: 'L', quantity: 10, costTypeId: LABOR, unitName: null }],
     timeEntries: [
       { minutes: 300, startedAt: '2026-06-05T12:00:00Z', user: 'Alice' }, // 5 hrs regular -> saved 5
-      { minutes: 120, startedAt: '2026-06-20T12:00:00Z', user: 'Alice' }, // 2 hrs warranty -> penalty 3
+      { minutes: 120, startedAt: '2026-06-20T12:00:00Z', user: 'Alice' }, // 2 hrs warranty
     ],
   };
   const r = computeJobBonus(detail, config);
   assert.equal(r.saved, 5);
-  assert.equal(r.multiplier, 1.0); // 5 < boost min
-  assert.equal(r.rawBonus, 5);
-  assert.equal(r.penalty, 3); // 2 warranty hrs * 1.5
-  assert.equal(r.netBonus, 2); // 5 - 3
+  assert.equal(r.multiplier, 1.0);
+  assert.equal(r.bonusHours, 5); // full bonus paid — no automatic deduction
+  assert.equal(r.warrantyDeduction, 3); // 2 warranty hrs x 1.5, recorded for manual use
+  assert.ok(r.flags.includes('WARRANTY_TIME'));
+  assert.equal(r.distribution['Alice'], 5);
 });
 
 test('buildReport aggregates bonus per employee/month and flags review jobs', () => {
@@ -206,24 +224,22 @@ test('buildReport aggregates bonus per employee/month and flags review jobs', ()
   const bonusJobDetails = [
     {
       id: 'GB', name: 'Guest Bath', closedOn: '2026-06-26',
-      documents: [{ type: 'customerOrder', issueDate: '2026-04-29', laborItems: [{ name: 'A', quantity: 30.5 }] }],
+      budgetItems: [{ name: 'A', quantity: 33.1, costTypeId: LABOR, unitName: null }],
       timeEntries: [
-        { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' },
-        { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' },
-      ],
+        { minutes: 831, startedAt: '2026-05-15T13:00:00Z', user: 'Aaron Motta' }, // 13.85
+        { minutes: 555, startedAt: '2026-05-16T13:00:00Z', user: 'Nigel Greenberg' }, // 9.25
+      ], // 23.1 actual -> saved 10 -> x1.1 -> 11 hrs
     },
     {
       id: 'NB', name: 'No time job', closedOn: '2026-06-09',
-      documents: [{ type: 'customerOrder', issueDate: '2026-05-01', laborItems: [{ name: 'A', quantity: 130 }] }],
+      budgetItems: [{ name: 'A', quantity: 130, costTypeId: LABOR, unitName: null }],
       timeEntries: [], // no time -> flagged, not payable
     },
   ];
   const r = buildReport({ jobs, revenueRows: [], salesCommissionLines: [], fullyPaidJobIds: new Set(), bonusJobDetails }, config, 2026);
   assert.equal(r.bonus.qualifyingCount, 2);
-  // June (month 6) bonus hours = 8.14, split across the two techs
-  assert.ok(Math.abs(r.bonus.monthlyTotals[5] - 8.14) < 0.01);
+  assert.ok(Math.abs(r.bonus.monthlyTotals[5] - 11) < 0.01);
   assert.ok(r.bonus.employees.includes('Aaron Motta'));
-  assert.equal(Math.round(r.grand.bonusHours * 100) / 100, 8.14);
   // NB job flagged NO_TIME and is in review, not payable
   const nb = r.bonus.jobs.find((j) => j.id === 'NB');
   assert.ok(nb.flags.includes('NO_TIME'));

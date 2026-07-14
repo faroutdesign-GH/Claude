@@ -50,71 +50,37 @@ function sumLinesByJob(lines) {
 // Efficiency Bonus engine
 // ===========================================================================
 
-/** Sum labor quantities on a document (ignoring null quantities). */
-function docLaborQty(doc) {
-  let total = 0;
-  for (const li of doc.laborItems || []) {
-    if (li.quantity != null && !Number.isNaN(Number(li.quantity))) total += Number(li.quantity);
-  }
-  return total;
-}
-
-/** Signature to detect exact-duplicate document copies. */
-function docSignature(doc) {
-  const items = (doc.laborItems || [])
-    .map((li) => `${li.name}=${li.quantity}`)
-    .sort()
-    .join('|');
-  return `${doc.issueDate || ''}::${items}`;
-}
-
 /**
- * Compute bid labor hours for a job from its approved documents.
+ * Compute bid hours from the JOB BUDGET's approved time. Approval bonds a
+ * document's quantities to the budget, so the budget is the sole source of
+ * truth and all approved time is additive.
  *
- * Priority: approved customerOrders (summed — change orders are additive),
- * falling back to the latest approved customerInvoice only if no order has
- * labor. Exact-duplicate document copies are counted once. A job with more than
- * one distinct order is flagged (MULTIPLE_ORDERS) for a quick manual check.
+ * `budgetItems`: [{quantity, costTypeId, unitName}] — pre-filtered to the
+ * Labor and Travel cost types. Labor quantities always count; Travel counts
+ * only when the line's unit is Hours.
  *
  * @returns {{bid:number, source:string, flags:string[]}}
  */
-function computeBidHours(documents) {
+function computeBidHours(budgetItems, cfg) {
   const flags = [];
-  const orders = documents.filter((d) => d.type === 'customerOrder');
-  const invoices = documents.filter((d) => d.type === 'customerInvoice');
-  const hasLabor = (d) => (d.laborItems || []).some((li) => li.quantity != null);
-
-  const usableOrders = orders.filter(hasLabor);
-  if (usableOrders.length) {
-    // Earliest distinct order = base; later distinct orders = additive change orders.
-    const sorted = usableOrders.slice().sort((a, b) => (a.issueDate || '').localeCompare(b.issueDate || ''));
-    const seen = new Set();
-    let base = null;
-    let changeTotal = 0;
-    let distinctCount = 0;
-    for (const d of sorted) {
-      const sig = docSignature(d);
-      if (seen.has(sig)) continue; // duplicate document copy — do not sum
-      seen.add(sig);
-      distinctCount += 1;
-      if (base === null) base = d;
-      else changeTotal += docLaborQty(d);
+  let bid = 0;
+  let counted = 0;
+  for (const item of budgetItems || []) {
+    const qty = Number(item.quantity);
+    if (item.quantity == null || Number.isNaN(qty)) continue;
+    if (item.costTypeId === cfg.laborCostTypeId) {
+      bid += qty;
+      counted += 1;
+    } else if (item.costTypeId === cfg.travelCostTypeId && item.unitName === cfg.hoursUnitName) {
+      bid += qty;
+      counted += 1;
     }
-    const bid = docLaborQty(base) + changeTotal;
-    const label = 'Contract/Proposal' + (changeTotal ? ' + change orders' : '');
-    if (distinctCount > 1) flags.push('MULTIPLE_ORDERS');
-    return { bid: round2(bid), source: label, flags };
   }
-
-  const usableInvoices = invoices.filter(hasLabor);
-  if (usableInvoices.length) {
-    const sorted = usableInvoices.slice().sort((a, b) => (a.issueDate || '').localeCompare(b.issueDate || ''));
-    flags.push('INVOICE_BID');
-    return { bid: round2(docLaborQty(sorted[sorted.length - 1])), source: 'Invoice (no order found)', flags };
+  if (counted === 0) {
+    flags.push('NO_BID');
+    return { bid: 0, source: 'No approved time on budget', flags };
   }
-
-  flags.push('NO_BID');
-  return { bid: 0, source: 'No labor bid found', flags };
+  return { bid: round2(bid), source: 'Budget approved time', flags };
 }
 
 /**
@@ -142,22 +108,21 @@ function splitActual(timeEntries, closedOn) {
   return { regByUser, regTotalMin, warrTotalMin, flags };
 }
 
-/** Bonus multiplier for hours saved. */
+/** Bonus multiplier for hours saved: > boostOverSaved pays boosted, else standard. */
 function multiplierFor(saved, cfg) {
   if (saved <= 0) return 0;
   const m = cfg.efficiencyBonus.multiplier;
-  if (saved >= m.boostMinSaved && saved <= m.boostMaxSaved) return m.boosted;
-  return m.standard;
+  return saved > m.boostOverSaved ? m.boosted : m.standard;
 }
 
 /**
  * Score one job's efficiency bonus.
- * @param {object} detail  {id,name,closedOn,documents,timeEntries,truncated*}
+ * @param {object} detail  {id,name,closedOn,budgetItems,timeEntries,truncated*}
  * @returns {object} per-job result
  */
 function computeJobBonus(detail, cfg) {
   const eb = cfg.efficiencyBonus;
-  const { bid, source, flags: bidFlags } = computeBidHours(detail.documents || []);
+  const { bid, source, flags: bidFlags } = computeBidHours(detail.budgetItems || [], cfg);
   const { regByUser, regTotalMin, warrTotalMin, flags: splitFlags } = splitActual(
     detail.timeEntries || [],
     detail.closedOn
@@ -167,23 +132,25 @@ function computeJobBonus(detail, cfg) {
   const warrHours = warrTotalMin / 60;
   const saved = bid - regHours;
   const multiplier = multiplierFor(saved, cfg);
-  const rawBonus = Math.max(0, saved) * multiplier;
-  const penalty = warrHours * eb.warrantyPenaltyRate;
-  const netBonus = Math.max(0, rawBonus - penalty);
+  const bonusHours = round3(Math.max(0, saved) * multiplier);
+  // Warranty deduction is RECORDED, never applied automatically — ownership
+  // docks it manually only when the follow-up was negligence.
+  const warrantyDeduction = round3(warrHours * eb.warranty.rate);
 
   const distribution = {};
-  if (netBonus > 0 && regTotalMin > 0) {
+  if (bonusHours > 0 && regTotalMin > 0) {
     for (const [user, mins] of Object.entries(regByUser)) {
-      distribution[user] = round3(netBonus * (mins / regTotalMin));
+      distribution[user] = round3(bonusHours * (mins / regTotalMin));
     }
   }
 
   const flags = [...bidFlags, ...splitFlags];
   if (regTotalMin === 0) flags.push('NO_TIME');
+  if (warrTotalMin > 0) flags.push('WARRANTY_TIME');
   if (saved > 0 && bid > 0 && regHours > 0 && regHours < bid * eb.lowActualFlagRatio) {
     flags.push('CHECK_LOW_ACTUAL');
   }
-  if (detail.truncatedTime || detail.truncatedDocuments) flags.push('DATA_TRUNCATED');
+  if (detail.truncatedTime || detail.truncatedBudget) flags.push('DATA_TRUNCATED');
 
   return {
     id: detail.id,
@@ -195,9 +162,8 @@ function computeJobBonus(detail, cfg) {
     warrHours: round2(warrHours),
     saved: round2(saved),
     multiplier,
-    rawBonus: round3(rawBonus),
-    penalty: round3(penalty),
-    netBonus: round3(netBonus),
+    bonusHours,
+    warrantyDeduction,
     distribution,
     regByUser: Object.fromEntries(Object.entries(regByUser).map(([u, m]) => [u, round2(m / 60)])),
     flags,
@@ -332,7 +298,8 @@ function buildReport(data, cfg, year) {
     employeeTotals,
     monthlyTotals: bonusMonthlyTotals,
     grandHours: bonusGrand,
-    jobs: bonusJobs.sort((a, b) => (a.month || 99) - (b.month || 99) || b.netBonus - a.netBonus),
+    warrantyDeductionTotal: round3(bonusJobs.reduce((s, j) => s + (j.warrantyDeduction || 0), 0)),
+    jobs: bonusJobs.sort((a, b) => (a.month || 99) - (b.month || 99) || b.bonusHours - a.bonusHours),
     review: bonusReview,
     qualifyingCount: bonusJobs.length,
   };

@@ -235,42 +235,42 @@ async function fetchQualifyingBonusJobs(orgId, { start, end }, opts = {}) {
 }
 
 /**
- * Fetch the detail needed to score one job's efficiency bonus: approved
- * order/invoice documents with their labor cost-item quantities, plus time
- * entries. Sets truncation flags if the API page limits were hit.
+ * Fetch the detail needed to score one job's efficiency bonus: the JOB
+ * BUDGET's approved time lines (Labor cost type, plus Travel lines in Hours)
+ * and the job's time entries. Documents are never consulted — approval bonds
+ * a document's quantities to the budget, so the budget is the sole source of
+ * truth for approved time.
  *
- * @returns {Promise<{id,name,closedOn, documents:Array, timeEntries:Array,
- *   truncatedDocuments:boolean, truncatedTime:boolean}>}
+ * @returns {Promise<{id,name,closedOn, budgetItems:Array, timeEntries:Array,
+ *   truncatedBudget:boolean, truncatedTime:boolean}>}
  */
 async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
   // Connection page size is capped at 100 by the API.
   const CONN_SIZE = 100;
 
-  // Documents + labor cost items (one page; a job with >100 approved docs or a
-  // doc with >100 labor lines is implausible, but we flag truncation if so).
-  const docRes = await pave(
+  const budgetRes = await pave(
     {
       job: {
         $: { id: jobId },
         id: {},
         name: {},
         closedOn: {},
-        documents: {
+        costItems: {
           $: {
             size: CONN_SIZE,
             where: {
-              and: [['type', 'in', ['customerOrder', 'customerInvoice']], ['status', 'approved']],
+              and: [
+                [['document', 'id'], '=', null], // budget lines only
+                [['costType', 'id'], 'in', [config.laborCostTypeId, config.travelCostTypeId]],
+              ],
             },
           },
           nextPage: {},
           nodes: {
-            type: {},
-            issueDate: {},
-            costItems: {
-              $: { size: CONN_SIZE, where: [['costType', 'id'], config.laborCostTypeId] },
-              nextPage: {},
-              nodes: { name: {}, quantity: {} },
-            },
+            name: {},
+            quantity: {},
+            costType: { id: {} },
+            unit: { name: {} },
           },
         },
       },
@@ -278,20 +278,14 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
     opts
   );
 
-  const job = docRes.job || {};
-  const docNodes = (job.documents && job.documents.nodes) || [];
-  let truncatedDocuments = !!(job.documents && job.documents.nextPage);
-  const documents = docNodes.map((d) => {
-    if (d.costItems && d.costItems.nextPage) truncatedDocuments = true;
-    return {
-      type: d.type,
-      issueDate: d.issueDate || null,
-      laborItems: ((d.costItems && d.costItems.nodes) || []).map((ci) => ({
-        name: ci.name,
-        quantity: ci.quantity,
-      })),
-    };
-  });
+  const job = budgetRes.job || {};
+  const itemNodes = (job.costItems && job.costItems.nodes) || [];
+  const budgetItems = itemNodes.map((ci) => ({
+    name: ci.name,
+    quantity: ci.quantity,
+    costTypeId: ci.costType && ci.costType.id,
+    unitName: ci.unit && ci.unit.name ? ci.unit.name : null,
+  }));
 
   // Time entries — paginate (up to 100 per page).
   const teNodes = await paginate(
@@ -318,9 +312,9 @@ async function fetchBonusJobDetail(orgId, jobId, opts = {}) {
     id: job.id || jobId,
     name: job.name || '(unnamed)',
     closedOn: job.closedOn || null,
-    documents,
+    budgetItems,
     timeEntries,
-    truncatedDocuments,
+    truncatedBudget: !!(job.costItems && job.costItems.nextPage),
     truncatedTime: false, // time entries are fully paginated
   };
 }

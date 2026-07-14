@@ -44,6 +44,10 @@ module.exports = {
   // "Labor" cost TYPE — groups every labor line regardless of cost code
   // (Hourly Labor, 1–4 Technician Labor, …). Used for efficiency-bonus bid hours.
   laborCostTypeId: '22P6fNyvL9jH',
+  // "Travel" cost TYPE — travel lines count toward bid hours ONLY when the
+  // line's unit is Hours (some travel lines are miles/dollars).
+  travelCostTypeId: '22P7hfGjakPi',
+  hoursUnitName: 'Hours',
 
   customFields: {
     salesRep: '22PBgFev6YGS', // "Sales Rep" (option) on job
@@ -87,39 +91,40 @@ module.exports = {
   },
 
   // Efficiency Bonus Program — technicians earn bonus HOURS for finishing a job
-  // under its bid labor hours. The report outputs bonus hours; payroll multiplies
-  // by each technician's own wage. Rules (confirmed with ownership):
+  // under its approved bid time. The report outputs bonus hours; payroll
+  // multiplies by each technician's own wage. Rules (confirmed with ownership,
+  // 2026-07):
   //
   //   Qualifying   = Sales Status "Project Awarded" AND closed in the month.
-  //   Bid hours    = SUM of labor cost-item quantity (Labor cost type) from the
-  //                  approved documents. Change orders are ADDITIVE — a job's
-  //                  base order plus each additional order are summed. Exact
-  //                  duplicate document copies are not double-counted, and any
-  //                  job with more than one distinct order is flagged for a
-  //                  quick manual check. The "N Technician" label in an item
-  //                  name is NOT a multiplier. Orders (customerOrder) are
-  //                  preferred; an approved invoice is a fallback if no order.
+  //   Bid hours    = APPROVED TIME on the JOB BUDGET, and nothing else.
+  //                  Documents are irrelevant — approval bonds a document's
+  //                  quantities to the budget, so the budget already reflects
+  //                  all approved time, additively (base + change orders).
+  //                  Counted lines: Labor cost-type quantities, plus Travel
+  //                  cost-type quantities whose unit is Hours (travel lines in
+  //                  miles/dollars are ignored). Since the mid-April catalog
+  //                  revision, "2 Technician" items carry a formula that
+  //                  multiplies person-hours in, so quantity is used as-is.
   //   Actual (reg) = time entries dated on/before the close date.
-  //   Warranty     = time entries after the close date (penalized).
-  //   Saved        = bid − regular actual. If <= 0, no bonus.
-  //   Multiplier   = boosted between boostMinSaved..boostMaxSaved hours saved,
-  //                  otherwise standard. (Very large savings fall back to
-  //                  standard, since they usually mean unlogged time.)
-  //   Raw bonus    = max(0, saved) × multiplier
-  //   Penalty      = warranty hours × warrantyPenaltyRate
-  //   Net bonus    = max(0, raw − penalty)
-  //   Split        = by each technician's share of regular minutes.
+  //   Warranty     = time entries after the close date. NOT deducted — recorded
+  //                  as its own line at warrantyRate (deterrent; ownership
+  //                  manually docks it only if the follow-up was negligence).
+  //   Saved        = bid − regular actual. If <= 0, no bonus (group loss).
+  //   Multiplier   = saved <= boostOverSaved hrs -> standard (1.0x);
+  //                  saved  > boostOverSaved hrs -> boosted  (1.1x).
+  //   Bonus hours  = max(0, saved) × multiplier, split across the technicians
+  //                  who logged regular time by their share of minutes
+  //                  (group bonus).
   efficiencyBonus: {
     qualifyingSalesStatus: 'Project Awarded',
     multiplier: {
       standard: 1.0,
       boosted: 1.1,
-      // NOTE: confirm the lower bound — the working script boosts from 6 hrs
-      // saved; if the intent is 7, change boostMinSaved to 7.
-      boostMinSaved: 6,
-      boostMaxSaved: 15,
+      boostOverSaved: 6, // strictly more than 6 hrs saved pays 1.1x
     },
-    warrantyPenaltyRate: 1.5,
+    warranty: {
+      rate: 1.5, // recorded deduction rate; applied manually, never automatic
+    },
     // Flag a job when regular actual is below this fraction of the bid — usually
     // a sign of unlogged time rather than real efficiency.
     lowActualFlagRatio: 0.5,
