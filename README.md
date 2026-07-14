@@ -72,7 +72,19 @@ permit email).
 (`GmailMessage.getAttachments`, `GmailAttachment.getBytes`, `Utilities.base64Encode`)
 and Anthropic PDF document API — but it has **not** been run end-to-end against a
 live permit PDF from this environment (no attachment-download tool was available
-here). Before relying on it, run `testPermitPdfExtraction_("<message id>")` once
-in the Apps Script editor against a real "Permit Issued" email (e.g. the Hernando
-County one) — it only reads and emails the result, it never touches JobTread — and
-confirm the extracted `permitNumber`/`address` look right.
+here). Confirm it works before relying on it — it's read-only, never touches
+JobTread:
+
+1. Paste the updated `src/FarOutOpsAgent.gs` into the Apps Script project (replacing what's there), Save.
+2. In the function dropdown at the top of the editor, choose `testPermitPdfExtraction_HernandoSample`, then click **Run**.
+   (This runs against a real Hernando County "Permit Issued" email already in the
+   inbox that has a permit-card PDF attached and no permit number in the email text —
+   exactly the case this fix is for.)
+3. Approve any permission prompt the first time.
+4. Check `curtice@faroutdesign.us` for an email titled "FOD Ops Agent — permit PDF test" —
+   it will show the permit number, address, and status the PDF extraction found.
+   Confirm those match the actual permit card before trusting this on live email.
+
+To test against any other permit email later, open it in Gmail, copy the long ID
+from the browser URL (after `#inbox/` or `#all/`), and run
+`testPermitPdfExtraction_("that id")` from the editor's console instead.

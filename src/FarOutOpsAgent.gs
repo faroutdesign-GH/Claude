@@ -73,6 +73,15 @@ function testPermitPdfExtraction_(messageId) {
     "Message: " + (msg.getSubject() || "") + "\n\n" + out);
 }
 
+/* Convenience, no-argument wrapper so this can be run directly from the Apps
+ * Script "Run" button (which can't pass parameters) — select this function
+ * from the dropdown and click Run. Points at a real Hernando County "Permit
+ * Issued" email that has a permit-card PDF attached and NO permit number in
+ * the email text, so it's a real test of the PDF fallback, not JobTread. */
+function testPermitPdfExtraction_HernandoSample() {
+  testPermitPdfExtraction_("19f2db782a84cb02");
+}
+
 function testAgent() {
   const checks = [];
   // 1. Job Tread
