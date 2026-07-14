@@ -58,6 +58,21 @@ function setupTriggers() {
   Logger.log("Trigger installed: runOpsAgent every 15 minutes.");
 }
 
+/* One-shot manual check: does the PDF-attachment fallback correctly read a real
+ * permit email? Open the message in Gmail, copy its message ID from the URL
+ * (the long string after #inbox/ or #all/), then in the Apps Script editor run
+ * testPermitPdfExtraction_() after pasting the ID below, or call it from the
+ * console with a message ID string. Emails the result — never touches JobTread. */
+function testPermitPdfExtraction_(messageId) {
+  const msg = GmailApp.getMessageById(messageId);
+  if (!msg) { Logger.log("No message found for id " + messageId); return; }
+  const result = readPermitPdf_(msg);
+  const out = result ? JSON.stringify(result, null, 2) : "(no PDF attachment found, or extraction failed)";
+  Logger.log(out);
+  MailApp.sendEmail(NOTIFY_EMAIL, "FOD Ops Agent — permit PDF test",
+    "Message: " + (msg.getSubject() || "") + "\n\n" + out);
+}
+
 function testAgent() {
   const checks = [];
   // 1. Job Tread
@@ -190,8 +205,26 @@ function handlePermit_(th, msg, j) {
   // Guard: never treat Far Out's own contractor license (pulled from the forwarded
   // signature, e.g. "EC13016150/ES12001208") as a permit number.
   j.permitNumber = sanitizePermitNumber_(j.permitNumber);
+
+  // Fallback: some notices (e.g. Hernando County "Permit Issued") carry no permit
+  // number in the email text — it lives only on the attached permit-card PDF. When
+  // the body gave us nothing, read the attachment and fill in what's missing.
+  let fromPdf = false;
+  if (!j.permitNumber) {
+    const pdf = readPermitPdf_(msg);
+    if (pdf) {
+      if (pdf.permitNumber) { j.permitNumber = pdf.permitNumber; fromPdf = true; }
+      j.address        = j.address        || pdf.address;
+      j.status         = j.status         || pdf.status;
+      j.inspectionType = j.inspectionType || pdf.inspectionType;
+      j.inspectionDate = j.inspectionDate || pdf.inspectionDate;
+      j.inspector      = j.inspector      || pdf.inspector;
+      j.municipality   = j.municipality   || pdf.municipality;
+    }
+  }
+
   if (!j.permitNumber && !j.address) {
-    return flagReview_(th, "Permit email but no permit number or address found. Review manually.");
+    return flagReview_(th, "Permit email but no permit number or address found (checked the body and any PDF attachments). Review manually.");
   }
 
   // Match by permit number FIRST (scan recent jobs' permit-number field in JS — no invalid query path)
@@ -205,7 +238,8 @@ function handlePermit_(th, msg, j) {
     updateJobPermit_(match.id, j);
     markDone_(th);
     return notify_("✅ Permit " + j.permitNumber + " → Job #" + match.number,
-      "Permit/inspection update applied automatically.\n\nJob #" + match.number + " — " + match.name +
+      "Permit/inspection update applied automatically" + (fromPdf ? " (permit # read from the attached permit card)" : "") + ".\n\n" +
+      "Job #" + match.number + " — " + match.name +
       "\nStatus: " + (j.status || j.inspectionType) + "\n" +
       (j.inspectionDate ? "Inspection: " + j.inspectionDate + " " + (j.inspector || "") : ""));
   }
@@ -213,10 +247,44 @@ function handlePermit_(th, msg, j) {
   // No permit-number match → try address, but FLAG (never guess across multiple jobs)
   askQuestion_(th, "permit-" + (j.permitNumber || Date.now()),
     "New permit/inspection received that I can't match to a known permit number:\n\n" +
-    "Permit: " + (j.permitNumber || "—") + "\nAddress: " + (j.address || "—") +
+    "Permit: " + (j.permitNumber || "—") + (fromPdf ? " (from attached card)" : "") +
+    "\nAddress: " + (j.address || "—") +
     "\nStatus: " + (j.status || j.inspectionType || "—") +
     (j.inspectionDate ? "\nInspection: " + j.inspectionDate + " " + (j.inspector || "") : "") +
     "\n\nReply with the Job NUMBER to apply it to (e.g. 1853), or SKIP.");
+}
+
+/* Read the attached permit-card PDF when the email text has no permit number.
+ * Returns extracted permit fields (permitNumber may still be null), or null if
+ * there's no readable PDF / extraction fails. Never throws. */
+function readPermitPdf_(msg) {
+  let attachments;
+  try { attachments = msg.getAttachments({ includeInlineImages: false, includeAttachments: true }) || []; }
+  catch (e) { return null; }
+  for (const att of attachments) {
+    const ctype = (att.getContentType() || "").toLowerCase();
+    const nm = (att.getName() || "").toLowerCase();
+    if (ctype.indexOf("pdf") === -1 && !nm.endsWith(".pdf")) continue;
+    // Anthropic's PDF limit is 32MB per request and base64 inflates size ~33%,
+    // so cap the raw file well under that to leave room for the prompt/overhead.
+    try { if (att.getSize() > 15 * 1024 * 1024) continue; } catch (e) {} // skip oversized
+    let b64;
+    try { b64 = Utilities.base64Encode(att.getBytes()); } catch (e) { continue; }
+    const prompt =
+      "This PDF is a building/electrical permit card for an electrical contractor. " +
+      "Extract as STRICT JSON only, no prose: " +
+      '{"permitNumber": ..., "address": ..., "status": ..., "inspectionType": ..., ' +
+      '"inspectionDate": ..., "inspector": ..., "municipality": ...}. ' +
+      "permitNumber is the municipal/county permit number printed on the card " +
+      "(e.g. HC-BTR-26-0325569, COMELE-2026-000796) — it is NOT a contractor license " +
+      "like EC13016150 or EC13016150/ES12001208. Use null for anything not present. JSON only.";
+    let parsed;
+    try { parsed = extractJSON_(callClaudePdf_(prompt, b64)); }
+    catch (e) { continue; }
+    if (parsed && parsed.permitNumber) parsed.permitNumber = sanitizePermitNumber_(parsed.permitNumber);
+    if (parsed && (parsed.permitNumber || parsed.address)) return parsed;
+  }
+  return null;
 }
 
 /* ============================ LEAD / INTAKE ============================ */
@@ -488,6 +556,25 @@ function callClaude_(prompt) {
     muteHttpExceptions: true });
   const j = JSON.parse(res.getContentText());
   if (j.error) throw "Anthropic error: " + JSON.stringify(j.error);
+  return (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+}
+
+function callClaudePdf_(prompt, pdfBase64) {
+  // Same endpoint as callClaude_, but attaches a PDF document block so Claude can
+  // read the permit card. PDF input needs no beta header. The document block must
+  // come before the text block.
+  const key = PropertiesService.getScriptProperties().getProperty("ANTHROPIC_KEY");
+  const res = UrlFetchApp.fetch("https://api.anthropic.com/v1/messages", {
+    method: "post", contentType: "application/json",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01" },
+    payload: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 1000,
+      messages: [{ role: "user", content: [
+        { type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } },
+        { type: "text", text: prompt }
+      ] }] }),
+    muteHttpExceptions: true });
+  const j = JSON.parse(res.getContentText());
+  if (j.error) throw "Anthropic PDF error: " + JSON.stringify(j.error);
   return (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
 }
 

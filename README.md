@@ -49,3 +49,30 @@ the model to ignore the forwarder's signature/license and only take a municipal
 permit number, and `sanitizePermitNumber_` drops any `EC#####` / `ES#####` /
 `EC#####/ES#####` value as a backstop. When no real permit number is present it now
 falls through to "match by job number" (asks Curtice) instead of storing the license.
+
+### PDF attachment fallback for permit number/details
+
+Some municipality "Permit Issued" emails (e.g. Hernando County) have **no permit
+number in the email text at all** — it's only printed on the attached permit-card
+PDF. When the body/subject give no permit number, `handlePermit_` now calls
+`readPermitPdf_`, which pulls each PDF attachment on the message and sends it to
+Claude as a PDF document (same Anthropic API, no beta header needed) to extract
+the permit number, address, status, inspection details, etc. The same
+`sanitizePermitNumber_` guard is applied to whatever the PDF extraction returns,
+so a license printed on the PDF can't slip through either. If no PDF is attached,
+or extraction finds nothing, it falls back to the existing "ask Curtice to match
+by job number" flow — no behavior change from before for those cases.
+
+This only fires when the body already didn't produce a permit number, so it adds
+one extra Claude call only on the emails that actually need it (not on every
+permit email).
+
+**Verification note:** this was built against the real forwarded-email format
+(signature-block false positive) and the documented Apps Script attachment API
+(`GmailMessage.getAttachments`, `GmailAttachment.getBytes`, `Utilities.base64Encode`)
+and Anthropic PDF document API — but it has **not** been run end-to-end against a
+live permit PDF from this environment (no attachment-download tool was available
+here). Before relying on it, run `testPermitPdfExtraction_("<message id>")` once
+in the Apps Script editor against a real "Permit Issued" email (e.g. the Hernando
+County one) — it only reads and emails the result, it never touches JobTread — and
+confirm the extracted `permitNumber`/`address` look right.
