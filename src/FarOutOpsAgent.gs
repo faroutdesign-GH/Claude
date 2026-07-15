@@ -127,6 +127,7 @@ function processInbox_() {
       if (kind === "qmerit")       handleQmerit_(th, msg, j);
       else if (kind === "permit")  handlePermit_(th, msg, j);
       else if (kind === "lead")    handleLead_(th, msg, j);
+      else if (kind === "portal")  handlePortalSetup_(th, msg, j);
       else                          flagReview_(th, "Unrecognized email type. Please review.");
     } catch (e) {
       flagReview_(th, "Error while processing: " + e);
@@ -139,7 +140,7 @@ function classifyAndExtract_(subj, body) {
   const prompt =
     "You triage and extract data from an email for an electrical contractor's ops inbox (Far Out Design).\n" +
     "Return STRICT JSON only, no prose, with this exact shape:\n" +
-    '{"type": "qmerit"|"permit"|"lead"|"other", "data": { ...type-specific fields... }}\n\n' +
+    '{"type": "qmerit"|"permit"|"lead"|"portal"|"other", "data": { ...type-specific fields... }}\n\n' +
     "Type definitions and the fields to put in \"data\" (use null for any missing field):\n" +
     "- qmerit: a Qmerit installation request (mentions Qmerit, a project #, EV charger install).\n" +
     "    data fields: project, name, phone, email, address, quoteDue\n" +
@@ -151,6 +152,13 @@ function classifyAndExtract_(subj, body) {
     "    A permitNumber is the ID issued by the municipality/county and looks like \"HC-BTR-26-0325569\" or\n" +
     "    \"COMELE-2026-000796\". A contractor license (EC#####, ES#####, or \"EC#####/ES#####\") is NEVER a\n" +
     "    permit number. If the forwarded content contains no municipal permit number, set permitNumber to null.\n" +
+    "- portal: an ACCOUNT-ACCESS notice from a municipal/county permitting portal (CommunityCore, Accela, EnerGov,\n" +
+    "    HillsGovHub, EnerGov/EPL, etc.) — e.g. \"account created\", \"account setup\", \"activate your account\",\n" +
+    "    \"password reset\", \"invitation\". These are about logging into the portal, NOT about a specific permit's\n" +
+    "    status. If the email instead reports a specific permit number, application status, or inspection result,\n" +
+    "    classify it as \"permit\" instead — \"portal\" is only for account/login housekeeping.\n" +
+    "    data fields: portalName (e.g. CommunityCore, Accela), municipality (e.g. North Redington Beach — null if" +
+    " not stated), purpose (e.g. \"account setup\", \"password reset\"), expiresIn (e.g. \"5 days\", null if not stated)\n" +
     "- lead: a new customer job request, quote request, or service call from a person/website/platform.\n" +
     "    data fields: name, phone, email, address, jobDescription, jobType\n" +
     "    jobType must be one of: Service Call, Panel Installation, EV Charger, Generator, " +
@@ -294,6 +302,30 @@ function readPermitPdf_(msg) {
     if (parsed && (parsed.permitNumber || parsed.address)) return parsed;
   }
   return null;
+}
+
+/* ============================ PERMIT PORTAL ACCOUNT ============================ */
+/* Account-access notices from a municipal permitting portal (CommunityCore, Accela,
+ * EnerGov, HillsGovHub, ...) — "account created", "activate your account", password
+ * resets, invitations. These carry no permit number/job to update, so there is
+ * nothing for this agent to do in JobTread; they just need a human to click the
+ * link before it expires.
+ *
+ * SECURITY: this deliberately does NOT fetch/click the activation link itself.
+ * Account-setup and password-reset links are exactly the kind of thing that
+ * should never be auto-visited by an automated script (they can create/claim
+ * accounts, and a compromised or spoofed message could otherwise be used to
+ * trick the agent into "activating" something on Curtice's behalf). It only
+ * surfaces the details so a person makes that call. */
+function handlePortalSetup_(th, msg, j) {
+  const portal = j.portalName || "A permitting portal";
+  const where = j.municipality ? (" — " + j.municipality) : "";
+  markDone_(th);
+  notify_("🔑 Portal account action needed" + where,
+    portal + " sent an account " + (j.purpose || "setup") + " email" + where + ".\n" +
+    (j.expiresIn ? "The link expires in " + j.expiresIn + " — " : "") +
+    "please open the email yourself and click the link; I don't click account/login " +
+    "links automatically.\n\nSubject: " + (msg.getSubject() || ""));
 }
 
 /* ============================ LEAD / INTAKE ============================ */

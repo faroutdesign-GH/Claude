@@ -6,6 +6,7 @@ triages inbound email with Claude and acts in JobTread:
 - **Qmerit installs** → creates a job + customer + quote-due todo under the Qmerit parent account
 - **Permit / inspection notices** → updates the matching job's permit status and logs a comment
 - **New leads / service calls** → creates a standalone customer, job, contact, and follow-up todo
+- **Permitting-portal account notices** (CommunityCore, Accela, etc. — "account created", "activate your account") → emails Curtice the details; never touches JobTread and never clicks the link itself
 - Anything ambiguous → emails Curtice a `[FOD-Q: id]` question. **Reply to that email** (answer on the first line) and the agent applies it on the next run, or reply `SKIP`.
 
 Source: [`src/FarOutOpsAgent.gs`](src/FarOutOpsAgent.gs)
@@ -88,3 +89,21 @@ JobTread:
 To test against any other permit email later, open it in Gmail, copy the long ID
 from the browser URL (after `#inbox/` or `#all/`), and run
 `testPermitPdfExtraction_("that id")` from the editor's console instead.
+
+### New category: permitting-portal account notices
+
+Running the agent live surfaced a real miss: a "CommunityCore - Account Setup"
+email (CommunityCore is a municipal permitting portal — same category as
+Accela/EnerGov/HillsGovHub — this one for the North Redington Beach jurisdiction)
+was classified as "Unrecognized email type" with no useful detail. These are
+account-access notices ("account created", "activate your account", password
+resets) with no permit number or job to attach to, so `permit` handling doesn't
+fit them — but silently binning them as "unrecognized" isn't good enough either,
+since the activation link expires (5 days on this one) and a missed link means
+losing portal access to that municipality's permit records.
+
+Added a `portal` classification: it now sends Curtice a specific email naming the
+portal, the municipality, and the expiry window, instead of a generic "please
+review." **It deliberately never fetches or clicks the link itself** — account
+setup/password-reset links are exactly the kind of thing an automated script
+should never auto-visit, so this only surfaces the details for a human to act on.
