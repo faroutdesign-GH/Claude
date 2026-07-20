@@ -470,6 +470,18 @@ function renderBonusHtml(report, periodLabel) {
   .empty{color:var(--muted);font-style:italic}
   .alert{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 12px;font-size:13px;margin:8px 0}
   .pool{margin-top:10px;font-size:13px;color:var(--muted)}
+  @media print {
+    :root{ color-scheme: light; }
+    body{ padding:0; font-size:11px; }
+    .wrap{ max-width:none; }
+    h2{ margin:14px 0 6px; page-break-after:avoid; }
+    table{ font-size:10px; }
+    th,td{ white-space:normal; padding:4px 6px; }
+    tr,.pcard,table,.notes{ break-inside:avoid; }
+    .scroll{ overflow:visible; }
+    a{ color:inherit; text-decoration:none; }
+  }
+  @page { size: letter landscape; margin: 0.5in; }
 </style>
 <div class="wrap">
   <h1>Technician Efficiency Bonus — ${esc(periodLabel)}</h1>
