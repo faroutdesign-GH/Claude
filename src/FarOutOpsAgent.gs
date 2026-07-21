@@ -82,6 +82,33 @@ function testPermitPdfExtraction_HernandoSample() {
   testPermitPdfExtraction_("19f2db782a84cb02");
 }
 
+/* One-shot manual check: what type (qmerit/permit/lead/portal/other) does the
+ * classifier assign to a given message, and what fields does it extract? This
+ * ONLY calls classifyAndExtract_ — it never calls a handler, so it cannot create
+ * a JobTread job/account, update a permit, or send Curtice a live notification.
+ * Purely read-only; safe to run against any real email, repeatedly. */
+function testClassifyMessage_(messageId) {
+  const msg = GmailApp.getMessageById(messageId);
+  if (!msg) { Logger.log("No message found for id " + messageId); return; }
+  const subj = msg.getSubject() || "";
+  const body = msg.getPlainBody() || "";
+  let result;
+  try { result = classifyAndExtract_(subj, body); }
+  catch (e) { result = { error: String(e) }; }
+  const out = JSON.stringify(result, null, 2);
+  Logger.log(out);
+  MailApp.sendEmail(NOTIFY_EMAIL, "FOD Ops Agent — classification test",
+    "Message: " + subj + "\n\n" + out +
+    "\n\n(This is a read-only test — no job/account was created and no other email was sent.)");
+}
+
+/* Convenience wrapper for the exact CommunityCore "Account Setup" email that
+ * previously got flagged as "Unrecognized email type" — select this from the
+ * Apps Script Run dropdown to confirm it now classifies as "portal" instead. */
+function testClassifyMessage_CommunityCoreSample() {
+  testClassifyMessage_("19f65e2dffccbb03");
+}
+
 function testAgent() {
   const checks = [];
   // 1. Job Tread

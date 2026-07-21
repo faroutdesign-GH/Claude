@@ -102,8 +102,23 @@ fit them — but silently binning them as "unrecognized" isn't good enough eithe
 since the activation link expires (5 days on this one) and a missed link means
 losing portal access to that municipality's permit records.
 
-Added a `portal` classification: it now sends Curtice a specific email naming the
-portal, the municipality, and the expiry window, instead of a generic "please
-review." **It deliberately never fetches or clicks the link itself** — account
-setup/password-reset links are exactly the kind of thing an automated script
-should never auto-visit, so this only surfaces the details for a human to act on.
+Added a `portal` classification: when it fires, it sends Curtice a specific email
+naming the portal, the municipality, and the expiry window, instead of a generic
+"please review." **It deliberately never fetches or clicks the link itself** —
+account setup/password-reset links are exactly the kind of thing an automated
+script should never auto-visit, so this only surfaces the details for a human to
+act on.
+
+**Verification:** this classification has not been confirmed against a real
+message yet. To check it, run `testClassifyMessage_CommunityCoreSample` from the
+Apps Script Run dropdown — it's **read-only**: it only calls the classifier and
+emails you the result, it never calls a handler, so it cannot create a JobTread
+job/account or send Curtice a live notification. Confirm the email you get back
+shows `"type": "portal"` with `portalName`/`municipality` filled in correctly,
+not `"type": "other"`. (It targets the exact email that was previously flagged
+"Unrecognized" — that original email won't get reprocessed by the live agent on
+its own since it's already marked read; this test hook is how to check the fix
+without waiting for a new similar email to arrive.)
+
+To test classification against any other email, open it in Gmail, copy its
+message ID from the URL, and run `testClassifyMessage_("that id")` instead.
