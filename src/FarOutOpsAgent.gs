@@ -131,8 +131,9 @@ function testAgent() {
 /* ============================ INBOX ============================ */
 
 function processInbox_() {
-  // Unread, not already handled
-  const threads = GmailApp.search('in:inbox is:unread -label:' + L_DONE + ' -label:' + L_PENDING, 0, 20);
+  // Unread, not already handled or already flagged for review
+  const threads = GmailApp.search(
+    'in:inbox is:unread -label:' + L_DONE + ' -label:' + L_PENDING + ' -label:' + L_REVIEW, 0, 20);
   for (const th of threads) {
     const msgs = th.getMessages();
     const msg = msgs[msgs.length - 1];
@@ -141,6 +142,16 @@ function processInbox_() {
 
     // Skip our own question replies (handled in processReplies_)
     if (subj.indexOf("[FOD-Q:") !== -1) continue;
+
+    // Skip any thread WE started (notify_/flagReview_ success or review emails —
+    // these carry no [FOD-Q:] tag and, for notify_, no label either). A reply to
+    // one of our own outbound notifications is never new inbound business — it's
+    // Curtice replying to us — so it must never be re-classified as a customer/
+    // permit/lead email. Without this, e.g. a one-word "Ignore" reply to a
+    // flagReview_ email gets fed through the classifier and comes back "other,"
+    // producing a confusing self-referential "Unrecognized email type" notice.
+    const firstFrom = (msgs[0].getFrom() || "").toLowerCase();
+    if (firstFrom.indexOf(OPS_EMAIL.toLowerCase()) !== -1) { markDone_(th); continue; }
 
     // Single Claude call: classify AND extract type-specific fields at once.
     let result;
@@ -647,7 +658,18 @@ function callClaudePdf_(prompt, pdfBase64) {
 }
 
 function extractJSON_(text) {
-  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+  // Hardened after a real failure (2026-06-30): Claude occasionally replies with
+  // prose instead of JSON (e.g. when a forwarded email's own text confuses the
+  // model), which used to throw a raw, opaque JSON.parse SyntaxError all the way
+  // up into a "Needs review" email. Fail with a clear, readable message instead.
+  const cleaned = (text || "").replace(/```json/gi, "").replace(/```/g, "").trim();
   const start = cleaned.indexOf("{"), end = cleaned.lastIndexOf("}");
-  return JSON.parse(cleaned.slice(start, end + 1));
+  if (start === -1 || end === -1 || end < start) {
+    throw "Claude did not return JSON. Got: " + cleaned.slice(0, 200);
+  }
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch (e) {
+    throw "Claude's JSON was malformed. Got: " + cleaned.slice(start, start + 200);
+  }
 }

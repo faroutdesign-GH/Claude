@@ -122,3 +122,55 @@ without waiting for a new similar email to arrive.)
 
 To test classification against any other email, open it in Gmail, copy its
 message ID from the URL, and run `testClassifyMessage_("that id")` instead.
+
+### Audit against live inbox + JobTread data (2026-07-21)
+
+Checked real mailbox history and JobTread against both the permit and lead paths.
+
+**Fixed — a live bug, not historical.** `flagReview_` labels a thread
+`Agent-Needs-Review` but not `Agent-Processed`, and `notify_` doesn't label the
+thread at all. `processInbox_` only excluded `-label:Done -label:Pending`, so a
+reply to any of *our own* outbound notifications — even a one-word "Ignore" from
+Curtice — went unread again, got swept back into the inbox search, and was fed
+through the classifier as if it were a new customer email. This actually happened
+live: Curtice's "Ignore" reply to a review-flag email came back "Unrecognized
+email type," producing a confusing self-referential notice and wasting a Claude
+call. Fixed two ways: `processInbox_` now also excludes `-label:` Needs-Review,
+and — the real fix — it now skips (and marks done) any thread whose **first**
+message was sent by `ops@faroutdesign.us` itself, since a thread we started is
+never new inbound business, no matter what label ended up on it.
+
+**Hardened.** `extractJSON_` used a raw, unguarded `JSON.parse` — if Claude ever
+replies with prose instead of JSON (confirmed happened for real on 2026-06-30, see
+below), it threw an opaque `SyntaxError` instead of a readable message. It now
+raises a clear "Claude did not return JSON" / "Claude's JSON was malformed"
+error with the actual text, so a future occurrence is diagnosable from the
+notification email alone instead of needing the execution log.
+
+**Found, not caused by anything in this repo — needs manual follow-up.** A City
+of Largo "Inspection Results - Electrical Final" email from 2026-06-25 (permit
+`ELEC-26-000269`, inspector Cox/Andrew, status **Passed**) crashed the *original*
+pre-refinement script with that same unguarded-JSON.parse bug and was never
+applied to any job — confirmed by querying JobTread directly for a job with that
+permit number: none exists. **This inspection pass may never have been recorded
+in JobTread — worth checking that job manually.** The crash path itself no longer
+exists in the current code (the classify+extract consolidation and the PDF
+fallback's internal error handling both catch this now, and the extractJSON_
+hardening above makes any future recurrence loud instead of silent), so this is
+a one-time data gap to close by hand, not an ongoing risk.
+
+**Confirmed fine, not a bug.** A "Security alert" (a real Google sign-in
+notification for `ops@faroutdesign.us`) was correctly classified as `other` and
+flagged for review — that's the intended fallback for anything that genuinely
+isn't a qmerit/permit/lead/portal email, working as designed.
+
+**Lead path: unverified — never fired on real data.** Searched all mail history
+for any `✅ Created Job #...` notification (non-Qmerit) or any `[FOD-Q: lead-...]`
+question, going back over the full available history. **Zero results either
+way.** `handleLead_` has not been exercised by a single real email since this
+agent has existed, positive or negative. It's implemented correctly on read-through
+and shares the same classification path as permit, so there's no known bug in
+it — but "no evidence of failure" and "confirmed working" are different claims,
+and only the first one is true right now. If a real new-customer-lead email
+comes in, its outcome is worth checking the first time, the same way the permit
+and portal paths were checked here.
