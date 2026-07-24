@@ -159,6 +159,39 @@ fallback's internal error handling both catch this now, and the extractJSON_
 hardening above makes any future recurrence loud instead of silent), so this is
 a one-time data gap to close by hand, not an ongoing risk.
 
+**Update:** Curtice added the missing permit number to Job #1927 ("Service
+Upgrade") directly in JobTread. Confirmed via a live query — `ELEC-26-000269`
+is now on that job. Its **permit-status field is still "Permit Received"**
+though, not updated to reflect the actual Passed/Electrical-Final result — the
+number being missing is exactly why the automated match (and status update)
+never fired in the first place. Applying that status update is a manual
+follow-up, not something this audit changes on its own.
+
+### Address matching for permits was never actually implemented
+
+Real bug, reported directly: the code had a comment saying "try address, but
+FLAG (never guess across multiple jobs)" right where a permit had no known
+permit number — but no address-matching code ever followed that comment. Every
+permit that didn't match by number went straight to asking Curtice, regardless
+of whether the email had a usable address. So "recognizing jobs based on
+addresses listed in the email" never worked at all, not intermittently.
+
+Added `findJobsByAddress_`, matching the same pattern already used for the
+Qmerit duplicate check: it queries `job.location.address` with a `LIKE` on the
+street portion of the extracted address (before the first comma), skipping
+short/generic fragments. Verified the exact query shape against the live API
+(`{"like": [{"field": ["location", "address"]}, {"value": "%...%"}]}`) before
+wiring it in — a first draft had a brace nested one level wrong that `node
+--check` didn't catch (still valid JS, just querying the wrong field path); the
+version that shipped was re-verified against a real address and returned the
+correct single job.
+
+Behavior now: **exactly one address match** → applied automatically, same as a
+permit-number match, but the notification says "matched by ADDRESS, not permit
+number" so it's easy to spot-check. **Zero or multiple matches** → still asks
+Curtice as before, but now lists the candidate jobs when there's more than one,
+instead of leaving him to hunt for the job number himself.
+
 **Confirmed fine, not a bug.** A "Security alert" (a real Google sign-in
 notification for `ops@faroutdesign.us`) was correctly classified as `other` and
 flagged for review — that's the intended fallback for anything that genuinely

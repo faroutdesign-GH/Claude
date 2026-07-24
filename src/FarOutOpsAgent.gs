@@ -288,25 +288,68 @@ function handlePermit_(th, msg, j) {
     match = findJobByPermit_(j.permitNumber);
   }
 
+  let matchedByAddress = false;
+  let addressCandidates = [];
+
+  // No permit-number match → try address (this used to just say "try address" in
+  // a comment and never actually do it — every permit without a known number went
+  // straight to asking Curtice regardless of whether the email had an address).
+  if (!match && j.address) {
+    addressCandidates = findJobsByAddress_(j.address);
+    if (addressCandidates.length === 1) {
+      match = addressCandidates[0];
+      matchedByAddress = true;
+    }
+    // 0 candidates: nothing to match, fall through to asking.
+    // >1 candidates: ambiguous — never guess which job; fall through to asking,
+    // but list the candidates so Curtice doesn't have to hunt for the number.
+  }
+
   if (match) {
-    // Known permit on a job → auto-update status + customer-facing comment
+    // Known permit (by number, or by a single unambiguous address match) →
+    // auto-update status + customer-facing comment.
     updateJobPermit_(match.id, j);
     markDone_(th);
-    return notify_("✅ Permit " + j.permitNumber + " → Job #" + match.number,
-      "Permit/inspection update applied automatically" + (fromPdf ? " (permit # read from the attached permit card)" : "") + ".\n\n" +
+    return notify_("✅ Permit " + (j.permitNumber || "update") + " → Job #" + match.number,
+      "Permit/inspection update applied automatically" +
+      (matchedByAddress ? " (matched by ADDRESS, not permit number — please spot-check this is the right job)"
+        : (fromPdf ? " (permit # read from the attached permit card)" : "")) + ".\n\n" +
       "Job #" + match.number + " — " + match.name +
       "\nStatus: " + (j.status || j.inspectionType) + "\n" +
       (j.inspectionDate ? "Inspection: " + j.inspectionDate + " " + (j.inspector || "") : ""));
   }
 
-  // No permit-number match → try address, but FLAG (never guess across multiple jobs)
+  const candidateNote = addressCandidates.length > 1
+    ? "\n\nJobs at similar addresses: " + addressCandidates.map(c => "#" + c.number + " — " + c.name).join(", ")
+    : "";
   askQuestion_(th, "permit-" + (j.permitNumber || Date.now()),
-    "New permit/inspection received that I can't match to a known permit number:\n\n" +
+    "New permit/inspection received that I can't match to a known permit number" +
+    (addressCandidates.length > 1 ? " or a single matching address" : "") + ":\n\n" +
     "Permit: " + (j.permitNumber || "—") + (fromPdf ? " (from attached card)" : "") +
     "\nAddress: " + (j.address || "—") +
     "\nStatus: " + (j.status || j.inspectionType || "—") +
     (j.inspectionDate ? "\nInspection: " + j.inspectionDate + " " + (j.inspector || "") : "") +
+    candidateNote +
     "\n\nReply with the Job NUMBER to apply it to (e.g. 1853), or SKIP.");
+}
+
+/* Find jobs whose location address contains the street portion of `address`.
+ * Same pattern as the Qmerit duplicate check: only the street (before the first
+ * comma) is matched, and only when it's long enough to be a real street, not a
+ * bare city/zip fragment that could match unrelated jobs. */
+function findJobsByAddress_(address) {
+  const streetPart = (address || "").split(",")[0].trim();
+  if (streetPart.length < 5) return [];
+  const r = jt_({
+    organization: {
+      $: { id: ORG_ID },
+      jobs: {
+        $: { size: 10, where: { like: [{ field: ["location", "address"] }, { value: "%" + streetPart + "%" }] } },
+        nodes: { id: {}, name: {}, number: {} }
+      }
+    }
+  });
+  return (r.organization.jobs.nodes) || [];
 }
 
 /* Read the attached permit-card PDF when the email text has no permit number.
