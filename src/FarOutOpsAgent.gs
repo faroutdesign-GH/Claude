@@ -220,7 +220,12 @@ function handleQmerit_(th, msg, j) {
   // Dedup: existing location at this address under Qmerit parent?
   const streetPart = (j.address || "").split(",")[0].trim();
   let existing = null;
-  if (streetPart.length >= 5) {  // only check when we have a real street, avoids false dup on bare city/zip
+  // Require a digit (house number) as well as length: extraction sometimes returns
+  // just "City, State Zip" with no street (seen live for project #584627, which
+  // came back "Plant City, FL 33565" on the first pass) — "Plant City" alone is
+  // 10 characters and would otherwise pass the length check, then LIKE-match
+  // every Qmerit job in that city, not just ones at the same address.
+  if (streetPart.length >= 5 && /\d/.test(streetPart)) {
     const loc = jt_({ account: { $: { id: QMERIT_PARENT },
       locations: { $: { size: 40, where: { like: [{ field: ["address"] }, { value: "%" + streetPart + "%" }] } },
         nodes: { id: {}, address: {} } } } });
@@ -335,11 +340,12 @@ function handlePermit_(th, msg, j) {
 
 /* Find jobs whose location address contains the street portion of `address`.
  * Same pattern as the Qmerit duplicate check: only the street (before the first
- * comma) is matched, and only when it's long enough to be a real street, not a
- * bare city/zip fragment that could match unrelated jobs. */
+ * comma) is matched, and only when it's long enough AND contains a house number
+ * to be a real street, not a bare city/zip fragment (e.g. "Plant City") that
+ * could match every job in that city instead of the one at this address. */
 function findJobsByAddress_(address) {
   const streetPart = (address || "").split(",")[0].trim();
-  if (streetPart.length < 5) return [];
+  if (streetPart.length < 5 || !/\d/.test(streetPart)) return [];
   const r = jt_({
     organization: {
       $: { id: ORG_ID },

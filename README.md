@@ -207,3 +207,58 @@ it — but "no evidence of failure" and "confirmed working" are different claims
 and only the first one is true right now. If a real new-customer-lead email
 comes in, its outcome is worth checking the first time, the same way the permit
 and portal paths were checked here.
+
+### Live audit (2026-07-28) — two prior "unverified" items were actually confirmed, one new bug found
+
+With direct access to the live mailbox and JobTread data, re-checked everything
+this README had flagged as needing manual confirmation:
+
+**PDF extraction — now confirmed, this document's caveat above was stale.** The
+2026-07-21 "FOD Ops Agent — permit PDF test" email shows `testPermitPdfExtraction_`
+correctly extracted `permitNumber: "RESELEC-000119-2026"`, the site address, and
+`municipality: "Hernando County"` from a real forwarded "Permit Issued" email
+with no permit number in the body text. Working as designed.
+
+**Portal classification — now confirmed, same stale caveat.** The 2026-07-21
+"FOD Ops Agent — classification test" email shows the CommunityCore "Account
+Setup" message correctly classified `"type": "portal"` (not `"other"`), with
+`portalName`, `purpose`, and `expiresIn` all extracted. Working as designed.
+
+**Job #1927 permit-status field — resolved.** Queried the job directly: the
+Permitting & Inspections field now reads "All Inspections Passed" with permit
+`ELEC-26-000269` attached. The manual follow-up noted above is done; no code
+or data action needed.
+
+**New bug, real (though not yet harmful) impact: address matching accepted a
+bare city name as a "street."** Both the Qmerit duplicate check and
+`findJobsByAddress_` derived a "street" by taking everything before the first
+comma and requiring only `length >= 5`. A live Qmerit email for **project
+#584627** (2026-06-30) had its address extracted as just `"Plant City, FL
+33565"` (no street) on the first pass;
+`"Plant City"` is 10 characters, so it passed the length check and got matched
+via `LIKE %Plant City%` against every Qmerit job in that city, not just jobs at
+that address. In this specific case the same project's *second* extraction
+pass (8 seconds later) returned the full address and correctly matched the
+real duplicate (Job #1968, confirmed via JobTread), so no wrong outcome
+resulted this time — but the mechanism itself was unsound: in a city with
+multiple distinct Qmerit installs, a bare-city fragment could flag an
+unrelated job as a false "duplicate" (or, on the permit side, a false address
+match), and even when it happens to be correct, the notification shows the
+uninformative "Plant City, FL 33565" instead of the real matched address.
+Checked the other three live `qmerit-dup-*` cases in mailbox history
+(`#585114` → Job #1983, `#585536` → Job #2001, `#457338` → Job #1989, the last
+one only findable by job *name*, not description, which the initial description-only
+check missed) — all three were genuine duplicates, so this bug had not yet
+produced a wrong result live, just an unsound one waiting to happen.
+
+Fixed by requiring the extracted "street" fragment to also contain a digit
+(a house number) before it's used in either matcher — `"Plant City"` no longer
+qualifies, `"3110 Charlie Taylor Rd"` still does. Same one-line guard applied
+to both `handleQmerit_`'s dedup check and `findJobsByAddress_`.
+
+**Still pending, not a code issue:** as of 2026-07-28 there are four
+unanswered `[FOD-Q: permit-*]` questions in the mailbox (`PLUM-26-000221` ×2 —
+same permit, "issued" then "Passed" status, neither with an address to match
+by — `BLD-26-0523945`, and `EBP-26-11600`), all correctly awaiting Curtice's
+reply since none matched an existing job by number or address. These are
+business decisions for a human, not something for the agent to guess at.
