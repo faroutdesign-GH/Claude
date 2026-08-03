@@ -19,6 +19,34 @@ Source: [`src/FarOutOpsAgent.gs`](src/FarOutOpsAgent.gs)
 2. Run `setupTriggers` once and approve permissions (installs the 15-minute trigger).
 3. Run `testAgent` to confirm JobTread, Anthropic, and Gmail all connect.
 
+## Management Analyst (weekly)
+
+A second, independent script — [`src/ManagementAnalyst.gs`](src/ManagementAnalyst.gs) —
+emails Curtice a weekly review of the two internal "senior" roles (**Admin**,
+**Project Manager** — edit `SENIOR_ROLE_NAMES` in the file to add more):
+
+- **Missed deadlines/commitments** — to-dos assigned to a senior member whose
+  due date has passed without being marked complete.
+- **Process deviations** — open sales opportunities (JobTread "Sales Status"
+  not yet "Project Awarded") whose "Follow Up Date" has passed, attributed to
+  the senior member named in the "Sales Rep" custom field.
+
+It only reads JobTread data (via the same `jt_()`/`JT_GRANT_KEY` used by the
+Ops Agent above) and emails a plain-text report — it never edits jobs or
+tasks. Currently, "senior" resolves to Curtice (Admin) and Ben (Project
+Manager); Sarah (Office) and Nigel (Technician) are intentionally excluded.
+
+**Setup:** run `setupWeeklyAnalystTrigger` once (installs a Monday ~7am
+trigger). Run `testWeeklyAnalystReport` any time to preview the report by
+email — it's read-only and safe to run repeatedly.
+
+**Verification note:** the JobTread query shapes (role lookup, overdue-task
+filter, custom-field-by-id lookups for Sales Status/Sales Rep/Follow Up Date)
+were each verified against the live JobTread API for this org — real overdue
+to-dos and real stale sales follow-ups came back correctly. The script itself
+has not yet been run inside Apps Script — run `testWeeklyAnalystReport` once
+and check the email before trusting the weekly trigger.
+
 ## What changed in this refinement (2026-07)
 
 Three fixes, all verified against the live JobTread API:
