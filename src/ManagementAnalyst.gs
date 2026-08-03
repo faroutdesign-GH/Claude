@@ -22,10 +22,16 @@
  *
  * DEFINITIONS, per Curtice (2026-08-03 review):
  *   - 48-hour clock is strict wall-clock hours, not business hours.
- *   - "Scheduled" = any task with a start date whose name doesn't
- *     contain "on site" (an "on site" task is just the estimate visit).
+ *   - "Scheduled" = any non-to-do task with a start date whose name isn't
+ *     just an "on site"/"onsite" visit (that's just the estimate visit).
+ *     This check has NO time window — a job scheduled (and possibly
+ *     already worked) months ago with no contract on file is still a
+ *     live violation until it's fixed, not something that ages out.
  *   - Every job requires a signed contract, including service calls —
- *     no price-based exception. Only the deposit is exempt under $1000.
+ *     no price-based exception. Only the deposit is exempt under $1000,
+ *     and also exempt when Contract Terms is "Pay Upon Completion"
+ *     (no deposit is ever collected on those — full payment happens at
+ *     completion instead).
  *   - A Change Order is only ever used after a contract is signed, so an
  *     approved Change Order with no approved Contract/Agreement behind
  *     it is itself a deviation, not proof a contract exists.
@@ -35,11 +41,15 @@
  *
  * VERIFICATION NOTE: every query shape below (membership role lookup,
  * assignedTasks overdue filter, custom-field-by-id lookup for Sales
- * Status/Sales Rep, document type/status/name checks, New Lead age)
- * was verified against the live JobTread API for this organization —
- * confirmed real overdue to-dos and two real scheduled-without-contract
- * jobs (A/V upgrade #1863, Bathroom Circuit #1995) came back correctly.
- * The script itself has not yet been run inside Apps Script — run
+ * Status/Sales Rep/Contract Terms, document type/status/name checks,
+ * New Lead age) was verified against the live JobTread API for this
+ * organization by walking every open job's real documents and tasks.
+ * An earlier version of the schedule-compliance check limited itself to
+ * a rolling date window and silently missed older/already-completed
+ * violations (caught when job #1980's missing contract wasn't flagged);
+ * it now checks every open job with no window, which is the correct
+ * behavior for a "still true until fixed" compliance check. The script
+ * itself has not yet been run inside Apps Script — run
  * testWeeklyAnalystReport once and confirm the email looks right before
  * trusting the weekly trigger.
  ***********************************************************************/
@@ -49,8 +59,7 @@ const ANALYST_TZ = "America/New_York";
 const NEW_LEAD_STATUS = "New Lead";
 const NEW_LEAD_HOURS_THRESHOLD = 48;
 const DEPOSIT_REQUIRED_AT_PRICE = 1000;
-const SCHEDULE_WINDOW_DAYS_BACK = 7;  // how far back to check already-scheduled work
-const SCHEDULE_WINDOW_DAYS_FWD = 14;  // how far ahead to check upcoming schedule
+const DEPOSIT_EXEMPT_CONTRACT_TERMS = "Pay Upon Completion";
 
 /* ============================ ENTRY POINTS ============================ */
 
@@ -65,7 +74,7 @@ function runWeeklyAnalystReport() {
   }
 
   const newLeadViolations = getNewLeadViolations_(seniors, now.getTime());
-  const scheduleViolations = getScheduleComplianceViolations_(seniors, today);
+  const scheduleViolations = getScheduleComplianceViolations_(seniors);
   const missedDeadlines = getMissedDeadlines_(seniors, today);
   notifyAnalyst_(today, formatReport_(seniors, newLeadViolations, scheduleViolations, missedDeadlines, today));
 }
@@ -149,44 +158,46 @@ function getNewLeadViolations_(seniors, nowMs) {
   return items;
 }
 
-function getScheduleComplianceViolations_(seniors, today) {
-  const byFirstName = seniorsByFirstName_(seniors);
-  const from = shiftDate_(today, -SCHEDULE_WINDOW_DAYS_BACK);
-  const to = shiftDate_(today, SCHEDULE_WINDOW_DAYS_FWD);
+// A task counts as "scheduled" only once it has a start date and isn't just
+// an "on site"/"onsite" estimate visit — matches "on site"/"onsite" but not
+// misspellings like "onj site" (those are left in, and surface as a job
+// whose only documents are missing — worth a manual look either way).
+function isScheduledWork_(task) {
+  return !!task.startDate && !/on\s?site/i.test(task.name);
+}
 
+function getScheduleComplianceViolations_(seniors) {
+  const byFirstName = seniorsByFirstName_(seniors);
   const res = jt_({ organization: { $: { id: ORG_ID },
-    tasks: { $: { size: 100, where: { and: [
-      ["isToDo", false],
-      { ">=": [{ field: ["startDate"] }, { value: from }] },
-      { "<=": [{ field: ["startDate"] }, { value: to }] }
-    ] } },
-    nodes: {
-      id: {}, name: {}, startDate: {},
-      job: {
-        id: {}, name: {}, number: {}, closedOn: {}, projectedPrice: {},
+    jobs: { $: { size: 100, where: ["closedOn", "=", null] },
+      nodes: {
+        id: {}, name: {}, number: {}, projectedPrice: {},
         salesRep: { _: "customFieldValues",
           $: { where: { "=": [{ field: ["customField", "id"] }, { value: CF_SALES_REP }] } },
           nodes: { value: {} } },
-        documents: { $: { size: 50 }, nodes: { name: {}, type: {}, status: {} } }
-      }
-    } } } });
+        contractTerms: { _: "customFieldValues",
+          $: { where: { "=": [{ field: ["customField", "id"] }, { value: CF_CONTRACT }] } },
+          nodes: { value: {} } },
+        documents: { $: { size: 50 }, nodes: { name: {}, type: {}, status: {} } },
+        scheduledTasks: { _: "tasks", $: { size: 20, where: ["isToDo", false] },
+          nodes: { name: {}, startDate: {} } }
+      } } } });
 
-  const seenJobs = {};
   const items = [];
-  (res.organization.tasks.nodes || []).forEach(function (t) {
-    if (!t.job || t.job.closedOn) return;
-    if (/on site/i.test(t.name)) return;
-    if (seenJobs[t.job.id]) return; // one flag per job even if several tasks are scheduled
-    seenJobs[t.job.id] = true;
+  (res.organization.jobs.nodes || []).forEach(function (j) {
+    const scheduled = (j.scheduledTasks.nodes || []).filter(isScheduledWork_);
+    if (!scheduled.length) return; // nothing on the calendar yet — nothing to check
 
-    const docs = t.job.documents.nodes || [];
+    const docs = j.documents.nodes || [];
     const hasContract = docs.some(function (d) {
       return d.type === "customerOrder" && d.status === "approved" && /contract|agreement/i.test(d.name);
     });
     const hasOnlyChangeOrder = !hasContract && docs.some(function (d) {
       return d.type === "customerOrder" && d.status === "approved" && /change order/i.test(d.name);
     });
-    const needsDeposit = (t.job.projectedPrice || 0) >= DEPOSIT_REQUIRED_AT_PRICE;
+    const contractTerms = j.contractTerms.nodes.length ? j.contractTerms.nodes[0].value : null;
+    const needsDeposit = (j.projectedPrice || 0) >= DEPOSIT_REQUIRED_AT_PRICE &&
+      contractTerms !== DEPOSIT_EXEMPT_CONTRACT_TERMS;
     const hasDeposit = docs.some(function (d) {
       return d.type === "customerInvoice" && d.status === "approved" && /deposit|draw|progress/i.test(d.name);
     });
@@ -201,14 +212,16 @@ function getScheduleComplianceViolations_(seniors, today) {
     }
     if (!problems.length) return;
 
-    const rep = t.job.salesRep.nodes.length ? t.job.salesRep.nodes[0].value : null;
+    const rep = j.salesRep.nodes.length ? j.salesRep.nodes[0].value : null;
+    const earliestScheduled = scheduled.map(function (t) { return t.startDate; }).sort()[0];
     items.push({
       employee: attributeToSenior_(byFirstName, rep),
-      job: t.job.name + (t.job.number ? " (#" + t.job.number + ")" : ""),
-      scheduledOn: t.startDate,
+      job: j.name + (j.number ? " (#" + j.number + ")" : ""),
+      scheduledOn: earliestScheduled,
       issue: problems.join("; ")
     });
   });
+  items.sort(function (a, b) { return (a.scheduledOn || "").localeCompare(b.scheduledOn || ""); });
   return items;
 }
 
@@ -237,12 +250,6 @@ function getMissedDeadlines_(seniors, today) {
 
 function daysBetween_(earlierDate, laterDate) {
   return Math.round((new Date(laterDate) - new Date(earlierDate)) / 86400000);
-}
-
-function shiftDate_(isoDate, days) {
-  const d = new Date(isoDate + "T00:00:00");
-  d.setDate(d.getDate() + days);
-  return Utilities.formatDate(d, ANALYST_TZ, "yyyy-MM-dd");
 }
 
 /* ============================ REPORT ============================ */

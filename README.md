@@ -29,13 +29,16 @@ the file to add more):
 - **New leads not moved past "New Lead" within 48 hours** — the sales-process
   rule that a new lead must be reached out to (moving its Sales Status off
   "New Lead") within 48 wall-clock hours of the job being created.
-- **Scheduled without a signed contract / required deposit** — any job with a
-  scheduled task (has a start date, name isn't just "on site" — an estimate
-  visit doesn't count) that doesn't have an approved Contract/Agreement
-  document on file, or — for jobs priced $1000+ — an approved deposit/draw/
-  progress invoice on file. An approved Change Order alone doesn't count as
-  proof of a contract, since a Change Order is only ever used after a
-  contract is signed.
+- **Scheduled without a signed contract / required deposit** — any open job
+  with a scheduled task (has a start date, name isn't just "on site"/"onsite"
+  — an estimate visit doesn't count) that doesn't have an approved Contract/
+  Agreement document on file, or — for jobs priced $1000+ and not on "Pay
+  Upon Completion" terms — an approved deposit/draw/progress invoice on file.
+  An approved Change Order alone doesn't count as proof of a contract, since
+  a Change Order is only ever used after a contract is signed. This check has
+  no date window: it looks at every open job, since a missing contract on
+  work scheduled (and possibly already done) months ago is still a live
+  problem, not something that should age out of the report.
 - **Missed deadlines/commitments** — to-dos assigned to a senior member whose
   due date has passed without being marked complete.
 
@@ -55,11 +58,15 @@ trigger). Run `testWeeklyAnalystReport` any time to preview the report by
 email — it's read-only and safe to run repeatedly.
 
 **Verification note:** every query shape (role lookup, overdue-task filter,
-custom-field-by-id lookups for Sales Status/Sales Rep, document type/status/
-name checks, New Lead age) was verified against the live JobTread API for
-this org — confirmed real overdue to-dos and two real scheduled-without-
-contract jobs (A/V upgrade #1863, Bathroom Circuit #1995) came back
-correctly. The script itself has not yet been run inside Apps Script — run
+custom-field-by-id lookups for Sales Status/Sales Rep/Contract Terms,
+document type/status/name checks, New Lead age) was verified against the
+live JobTread API for this org by walking every open job's real documents
+and tasks — confirmed real overdue to-dos and ~24 real scheduled-without-
+contract/deposit jobs. An earlier version of the schedule-compliance check
+limited itself to a rolling date window and silently missed
+older/already-completed violations (caught when job #1980's missing
+contract wasn't flagged); it now checks every open job with no window. The
+script itself has not yet been run inside Apps Script — run
 `testWeeklyAnalystReport` once and check the email before trusting the
 weekly trigger.
 
