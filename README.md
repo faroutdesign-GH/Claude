@@ -38,7 +38,10 @@ the file to add more):
   a Change Order is only ever used after a contract is signed. This check has
   no date window: it looks at every open job, since a missing contract on
   work scheduled (and possibly already done) months ago is still a live
-  problem, not something that should age out of the report.
+  problem, not something that should age out of the report. Qmerit-account
+  jobs (account name contains "Qmerit") are skipped entirely — Qmerit
+  contracts with the customer directly and we install under their program,
+  so we never hold our own signed Contract/Agreement for those.
 - **Missed deadlines/commitments** — to-dos assigned to a senior member whose
   due date has passed without being marked complete.
 

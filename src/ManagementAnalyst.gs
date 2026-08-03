@@ -32,6 +32,10 @@
  *     and also exempt when Contract Terms is "Pay Upon Completion"
  *     (no deposit is ever collected on those — full payment happens at
  *     completion instead).
+ *   - Qmerit jobs (account name contains "Qmerit") are skipped by this
+ *     whole check — Qmerit is the third party that contracts with the
+ *     customer, we just install under their program, so we never hold
+ *     our own signed Contract/Agreement for those jobs.
  *   - A Change Order is only ever used after a contract is signed, so an
  *     approved Change Order with no approved Contract/Agreement behind
  *     it is itself a deviation, not proof a contract exists.
@@ -172,6 +176,7 @@ function getScheduleComplianceViolations_(seniors) {
     jobs: { $: { size: 100, where: ["closedOn", "=", null] },
       nodes: {
         id: {}, name: {}, number: {}, projectedPrice: {},
+        location: { account: { name: {} } },
         salesRep: { _: "customFieldValues",
           $: { where: { "=": [{ field: ["customField", "id"] }, { value: CF_SALES_REP }] } },
           nodes: { value: {} } },
@@ -185,6 +190,12 @@ function getScheduleComplianceViolations_(seniors) {
 
   const items = [];
   (res.organization.jobs.nodes || []).forEach(function (j) {
+    // Qmerit jobs never get a contract from us — Qmerit is the third party
+    // that contracts with the customer, we just do the install under their
+    // program, so this whole check doesn't apply to their accounts.
+    const accountName = j.location && j.location.account ? j.location.account.name : null;
+    if (accountName && /qmerit/i.test(accountName)) return;
+
     const scheduled = (j.scheduledTasks.nodes || []).filter(isScheduledWork_);
     if (!scheduled.length) return; // nothing on the calendar yet — nothing to check
 
