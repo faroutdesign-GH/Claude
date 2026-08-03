@@ -22,30 +22,46 @@ Source: [`src/FarOutOpsAgent.gs`](src/FarOutOpsAgent.gs)
 ## Management Analyst (weekly)
 
 A second, independent script — [`src/ManagementAnalyst.gs`](src/ManagementAnalyst.gs) —
-emails Curtice a weekly review of the two internal "senior" roles (**Admin**,
-**Project Manager** — edit `SENIOR_ROLE_NAMES` in the file to add more):
+emails Curtice a weekly review of the three internal "senior" roles
+(**Admin**, **Project Manager**, **Team Lead** — edit `SENIOR_ROLE_NAMES` in
+the file to add more):
 
+- **New leads not moved past "New Lead" within 48 hours** — the sales-process
+  rule that a new lead must be reached out to (moving its Sales Status off
+  "New Lead") within 48 wall-clock hours of the job being created.
+- **Scheduled without a signed contract / required deposit** — any job with a
+  scheduled task (has a start date, name isn't just "on site" — an estimate
+  visit doesn't count) that doesn't have an approved Contract/Agreement
+  document on file, or — for jobs priced $1000+ — an approved deposit/draw/
+  progress invoice on file. An approved Change Order alone doesn't count as
+  proof of a contract, since a Change Order is only ever used after a
+  contract is signed.
 - **Missed deadlines/commitments** — to-dos assigned to a senior member whose
   due date has passed without being marked complete.
-- **Process deviations** — open sales opportunities (JobTread "Sales Status"
-  not yet "Project Awarded") whose "Follow Up Date" has passed, attributed to
-  the senior member named in the "Sales Rep" custom field.
+
+All three are attributed to the senior member named in the job's "Sales Rep"
+custom field (missed deadlines are attributed to whoever the to-do is
+assigned to instead). A Sales Rep value that doesn't match a current senior
+member is reported as-is, not silently dropped.
 
 It only reads JobTread data (via the same `jt_()`/`JT_GRANT_KEY` used by the
-Ops Agent above) and emails a plain-text report — it never edits jobs or
-tasks. Currently, "senior" resolves to Curtice (Admin) and Ben (Project
-Manager); Sarah (Office) and Nigel (Technician) are intentionally excluded.
+Ops Agent above) and emails a plain-text report — it never edits jobs,
+tasks, or documents. Currently, "senior" resolves to Curtice (Admin), Ben
+(Project Manager), and Derek Erskin (Team Lead); Sarah (Office) and Nigel
+(Technician) are intentionally excluded.
 
 **Setup:** run `setupWeeklyAnalystTrigger` once (installs a Monday ~7am
 trigger). Run `testWeeklyAnalystReport` any time to preview the report by
 email — it's read-only and safe to run repeatedly.
 
-**Verification note:** the JobTread query shapes (role lookup, overdue-task
-filter, custom-field-by-id lookups for Sales Status/Sales Rep/Follow Up Date)
-were each verified against the live JobTread API for this org — real overdue
-to-dos and real stale sales follow-ups came back correctly. The script itself
-has not yet been run inside Apps Script — run `testWeeklyAnalystReport` once
-and check the email before trusting the weekly trigger.
+**Verification note:** every query shape (role lookup, overdue-task filter,
+custom-field-by-id lookups for Sales Status/Sales Rep, document type/status/
+name checks, New Lead age) was verified against the live JobTread API for
+this org — confirmed real overdue to-dos and two real scheduled-without-
+contract jobs (A/V upgrade #1863, Bathroom Circuit #1995) came back
+correctly. The script itself has not yet been run inside Apps Script — run
+`testWeeklyAnalystReport` once and check the email before trusting the
+weekly trigger.
 
 ## What changed in this refinement (2026-07)
 
