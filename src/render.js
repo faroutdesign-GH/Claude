@@ -107,6 +107,21 @@ function renderCsvFiles(report) {
     files.push({ name: 'efficiency-bonus-win-lose.csv', content: toCsv(headers, rows) });
   }
 
+  // 4c. Per-technician, per-job breakdown.
+  {
+    const headers = ['Technician', 'JobNumber', 'Job', 'Closed', 'TheirHrs', 'JobApprovedBid', 'JobUsed',
+      'JobSaved', 'Multiplier', 'WonHrs', 'OverHrs', 'WarrantyHrs', 'NetHrs'];
+    const byTech = technicianJobRows(report);
+    const rows = [];
+    for (const e of report.bonus.employeeSummary || []) {
+      for (const r of byTech[e.name] || []) {
+        rows.push([e.name, r.number != null ? r.number : '', r.name, r.closedOn || '', r.theirHrs, r.bid,
+          r.consumed, r.saved, r.multiplier || '', r.won, r.over, r.warranty, r.net]);
+      }
+    }
+    files.push({ name: 'efficiency-bonus-by-technician-job.csv', content: toCsv(headers, rows) });
+  }
+
   // 5. Efficiency bonus — per job. Warranty deduction is recorded, not applied.
   {
     const headers = ['Month', 'JobNumber', 'Job', 'Closed', 'ApprovedBidHrs', 'UnapprovedBidHrsExcluded', 'ActualRegHrs', 'SavedHrs',
@@ -232,6 +247,71 @@ function bonusComparisonTable(report) {
 
 function round3(n) {
   return Math.round((n + Number.EPSILON) * 1000) / 1000;
+}
+
+/**
+ * Rows of each technician's involvement on each job they logged regular or
+ * warranty time on. Used for the per-technician breakdown table and CSV.
+ */
+function technicianJobRows(report) {
+  const byTech = {};
+  for (const j of report.bonus.jobs) {
+    const names = new Set([
+      ...Object.keys(j.regByUser || {}),
+      ...Object.keys(j.warrantyDistribution || {}),
+    ]);
+    for (const name of names) {
+      const theirHrs = (j.regByUser && j.regByUser[name]) || 0;
+      const won = (j.distribution && j.distribution[name]) || 0;
+      const over = (j.lossDistribution && j.lossDistribution[name]) || 0;
+      const warr = (j.warrantyDistribution && j.warrantyDistribution[name]) || 0;
+      (byTech[name] = byTech[name] || []).push({
+        number: j.number, name: j.name, closedOn: j.closedOn,
+        theirHrs: round3(theirHrs), bid: j.bid, consumed: j.regHours, saved: j.saved,
+        multiplier: won > 0 ? j.multiplier : over > 0 ? config.efficiencyBonus.multiplier.standard : 0,
+        won: round3(won), over: round3(over), warranty: round3(warr),
+        net: round3(won - over - warr),
+      });
+    }
+  }
+  // Sort each tech's jobs by net descending (biggest wins first, worst losses last).
+  for (const name of Object.keys(byTech)) byTech[name].sort((a, b) => b.net - a.net);
+  return byTech;
+}
+
+function bonusByTechnicianTable(report) {
+  const byTech = technicianJobRows(report);
+  const order = (report.bonus.employeeSummary || []).map((e) => e.name).filter((n) => byTech[n]);
+  if (order.length === 0) return '<p class="empty">No technician job detail.</p>';
+  return order
+    .map((name) => {
+      const rows = byTech[name];
+      const sum = rows.reduce(
+        (a, r) => ({ won: a.won + r.won, over: a.over + r.over, warr: a.warr + r.warranty, net: a.net + r.net }),
+        { won: 0, over: 0, warr: 0, net: 0 }
+      );
+      const body = rows
+        .map((r) => {
+          const netCls = r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : 'z';
+          return `<tr><td class="num">${esc(r.number != null ? r.number : '-')}</td><td class="jn">${esc(r.name)}</td><td class="num">${r.theirHrs.toFixed(
+            2
+          )}</td><td class="num">${r.bid.toFixed(2)}</td><td class="num">${r.consumed.toFixed(2)}</td><td class="num ${r.saved >= 0 ? 'pos' : 'neg'}">${
+            r.saved >= 0 ? '+' : ''
+          }${r.saved.toFixed(2)}</td><td class="num">${r.multiplier ? 'x' + r.multiplier : '—'}</td><td class="num">${
+            r.won ? '<span class="pos">+' + r.won.toFixed(3) + '</span>' : '<span class="z">0</span>'
+          }</td><td class="num">${r.over ? '<span class="neg">−' + r.over.toFixed(3) + '</span>' : '<span class="z">0</span>'}</td><td class="num">${
+            r.warranty ? '<span class="neg">−' + r.warranty.toFixed(3) + '</span>' : '<span class="z">0</span>'
+          }</td><td class="num ${netCls}" style="font-weight:700">${r.net >= 0 ? '+' : '−'}${Math.abs(r.net).toFixed(3)}</td></tr>`;
+        })
+        .join('');
+      const foot = `<tr class="total"><td></td><td>${esc(name)} — total</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">+${sum.won.toFixed(
+        3
+      )}</td><td class="num">−${sum.over.toFixed(3)}</td><td class="num">−${sum.warr.toFixed(3)}</td><td class="num">${
+        sum.net >= 0 ? '+' : '−'
+      }${Math.abs(sum.net).toFixed(3)}</td></tr>`;
+      return `<h3 class="tech">${esc(name)}</h3><div class="scroll"><table><thead><tr><th class="num">Job #</th><th>Job</th><th class="num">Their hrs</th><th class="num">Job bid</th><th class="num">Job used</th><th class="num">Job saved</th><th class="num">Mult</th><th class="num">Won</th><th class="num">Over</th><th class="num">Warr</th><th class="num">Net</th></tr></thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table></div>`;
+    })
+    .join('');
 }
 
 function bonusByMonthTable(report) {
@@ -470,7 +550,9 @@ function renderBonusHtml(report, periodLabel) {
   .empty{color:var(--muted);font-style:italic}
   .alert{background:var(--warn-bg);color:var(--warn-fg);border-radius:8px;padding:8px 12px;font-size:13px;margin:8px 0}
   .pool{margin-top:10px;font-size:13px;color:var(--muted)}
+  h3.tech{font-size:14px;margin:18px 0 4px;color:var(--fg)}
   @media print {
+    h3.tech{page-break-after:avoid;margin:12px 0 3px}
     :root{ color-scheme: light; }
     body{ padding:0; font-size:11px; }
     .wrap{ max-width:none; }
@@ -496,6 +578,10 @@ function renderBonusHtml(report, periodLabel) {
   <h2>Win / lose comparison by technician</h2>
   <div class="scroll">${bonusComparisonTable(report)}</div>
   <div class="pool">Bonus won = hours saved on jobs finished under approved time, ×${config.efficiencyBonus.multiplier.boosted} (this is the payable pool). Over = hours over on jobs that ran long, ×${config.efficiencyBonus.multiplier.standard}. Warranty = after-close follow-up hours, ×${config.efficiencyBonus.warranty.rate}. Over and warranty are shown for comparison — they are not deducted from pay unless ownership applies them.</div>
+
+  <h2>Per-technician job breakdown</h2>
+  <div class="pool">Each technician's jobs, biggest net first. <b>Their hrs</b> = that person's clocked hours on the job; <b>Won/Over/Warr</b> are their share of the whole job's result (a job is a group win or a group loss). <b>Won</b> feeds payroll.</div>
+  ${bonusByTechnicianTable(report)}
 
   <h2>Jobs to review (${reviewCount})</h2>
   <div class="scroll">${bonusReviewTable(report)}</div>
