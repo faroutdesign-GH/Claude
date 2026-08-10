@@ -26,6 +26,7 @@ const FLAG_LABELS = {
   NO_CLOSE_DATE: { label: 'No close date', color: '#c0392b' },
   UNAPPROVED_TIME: { label: 'Unapproved bid time excluded', color: '#6b7280' },
   WARRANTY_TIME: { label: 'Warranty time — deduction is manual', color: '#b8860b' },
+  LOSS_REASSIGNED: { label: 'Overage reassigned (manual)', color: '#6b7280' },
   CHECK_LOW_ACTUAL: { label: 'Actual < 50% of bid — check unlogged time', color: '#b8860b' },
   DATA_TRUNCATED: { label: 'Data truncated — verify', color: '#c0392b' },
 };

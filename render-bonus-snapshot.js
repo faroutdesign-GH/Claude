@@ -41,6 +41,8 @@ const bonusJobDetails = snap.bonusDetails.map((d) => ({
     approved: !!approved,
   })),
   timeEntries: d.tes.map(([minutes, date, user]) => ({ minutes, startedAt: date, user })),
+  excludeFromLoss: d.excludeFromLoss || [],
+  lossNote: d.lossNote || null,
 }));
 
 const report = buildReport(

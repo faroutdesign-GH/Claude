@@ -292,6 +292,23 @@ test('buildReport: per-employee win/lose summary', () => {
   assert.ok(bySummary.Bob.net < 0);
 });
 
+test('excludeFromLoss reassigns a job overage off the excused tech', () => {
+  const detail = {
+    id: 'X', name: 'Reassigned', number: 7, closedOn: '2026-07-30',
+    budgetItems: [{ quantity: 3, costTypeId: LABOR, unitName: 'Hours', approved: true }],
+    timeEntries: [
+      { minutes: 180, startedAt: '2026-07-10T12:00:00Z', user: 'Aaron Motta' }, // 3h
+      { minutes: 480, startedAt: '2026-07-10T12:00:00Z', user: 'Nigel Greenberg' }, // 8h
+    ], // used 11h, bid 3 -> over 8h
+    excludeFromLoss: ['Nigel Greenberg'],
+  };
+  const r = computeJobBonus(detail, config);
+  assert.equal(r.saved, -8);
+  assert.equal(r.lossDistribution['Aaron Motta'], 8); // full overage to Aaron
+  assert.equal(r.lossDistribution['Nigel Greenberg'], undefined); // Nigel excused
+  assert.ok(r.flags.includes('LOSS_REASSIGNED'));
+});
+
 test('warranty enters comparison at 1.5x, attributed to the follow-up tech', () => {
   const detail = {
     id: 'Wj', name: 'Warranty', number: 9, closedOn: '2026-06-10',

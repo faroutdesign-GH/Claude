@@ -156,11 +156,20 @@ function computeJobBonus(detail, cfg) {
 
   // Loss side (for the win/lose comparison): a job over its approved time.
   // Raw overage hours at 1.0x, split by who worked it — a group loss.
+  // `excludeFromLoss` names are excused (e.g. the overage was another tech's
+  // negligence and this person was fixing it); the overage is redistributed
+  // across the remaining regular workers.
+  const excused = new Set(detail.excludeFromLoss || []);
   const lossHours = noTime ? 0 : saved < 0 ? round3(-saved) : 0;
   const lossDistribution = {};
   if (lossHours > 0 && regTotalMin > 0) {
-    for (const [user, mins] of Object.entries(regByUser)) {
-      lossDistribution[user] = round3(lossHours * (mins / regTotalMin));
+    let denom = 0;
+    for (const [user, mins] of Object.entries(regByUser)) if (!excused.has(user)) denom += mins;
+    if (denom > 0) {
+      for (const [user, mins] of Object.entries(regByUser)) {
+        if (excused.has(user)) continue;
+        lossDistribution[user] = round3(lossHours * (mins / denom));
+      }
     }
   }
 
@@ -179,10 +188,13 @@ function computeJobBonus(detail, cfg) {
     flags.push('CHECK_LOW_ACTUAL');
   }
   if (detail.truncatedTime || detail.truncatedBudget) flags.push('DATA_TRUNCATED');
+  if (excused.size > 0 && lossHours > 0) flags.push('LOSS_REASSIGNED');
 
   return {
     id: detail.id,
     number: detail.number != null ? detail.number : null,
+    excludeFromLoss: detail.excludeFromLoss || [],
+    lossNote: detail.lossNote || null,
     name: detail.name || '(unnamed)',
     closedOn: detail.closedOn || null,
     bid: round2(bid),
