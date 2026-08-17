@@ -28,9 +28,9 @@
     ["Tanya Danaher", "Under cabinet lighting", 694.68, "1991", "Under cabinet lighting", 694.68, ""]
   ],
   "qbNotInJobtread": [
-    ["Catherine & Ryan Pallas", "Electrical punch list", 2653.84, "No JobTread invoice at any status — invoiced directly in QB, or a JobTread invoice is missing."],
-    ["Jets Pizza", "Electrical wiring clearwater", 2411.07, "No JobTread invoice at any status."],
-    ["Qmerit Customers", "Anissa Westfall 379800", 114.00, "No JobTread invoice — Qmerit fees are often booked directly in QB."]
+    ["Catherine & Ryan Pallas", "Electrical punch list", 2653.84, "RESOLVED: paid Friday, JobTread invoice not entered yet. Real July sale — will post to JobTread. Nothing missed in QB."],
+    ["Jets Pizza", "Electrical wiring clearwater", 2411.07, "RESOLVED: same — paid, JobTread entry still pending. Real July sale."],
+    ["Qmerit Customers", "Anissa Westfall 379800", 114.00, "RESOLVED: reimbursement charge (pass-through), not a sale — correctly absent from JobTread."]
   ],
   "qbNotApprovedInJobtread": [
     ["Bob McJennett", "Punchlist", 722.20, "1980", "Light & Audio equipment", "denied"],

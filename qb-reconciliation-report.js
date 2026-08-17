@@ -115,7 +115,7 @@ const html = `<title>QB vs JobTread Reconciliation — ${esc(d.periodLabel)}</ti
     </table>
   </div>
 
-  <h2>① In QuickBooks but NOT in JobTread — likely missed in JobTread (${d.qbNotInJobtread.length}) · ${money(qbMissing)}</h2>
+  <h2>① In QuickBooks but NOT in JobTread — all explained ✓ (${d.qbNotInJobtread.length}) · ${money(qbMissing)}</h2>
   <div class="scroll">${qbMissTable(d.qbNotInJobtread)}</div>
 
   <h2>② In QuickBooks but pending/denied in JobTread — systems disagree (${d.qbNotApprovedInJobtread.length}) · ${money(qbNotApproved)}</h2>
