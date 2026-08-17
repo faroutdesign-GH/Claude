@@ -1,5 +1,5 @@
 {
- "note": "July 2026 efficiency-bonus snapshot pulled live from JobTread on 2026-08-10. Bid = job-budget APPROVED time only (Labor + hour-denominated Travel bonded to an approved document). items = [quantity, 'L'|'T', 'H'|null, approved]. tes = [minutes, date, user]. Self-contained: includes number/name/closedOn. | 2026-08 edits: #2000 time re-pulled (Derek entry removed); #1807 overage reassigned off Nigel (Aaron negligence).",
+ "note": "July 2026 efficiency-bonus snapshot pulled live from JobTread on 2026-08-10, budget + time re-pulled 2026-08-17. Bid = job-budget APPROVED time only (Labor + hour-denominated Travel bonded to an approved document). items = [quantity, 'L'|'T', 'H'|null, approved]. tes = [minutes, date, user]. Self-contained: includes number/name/closedOn. | 2026-08 edits: #2000 time re-pulled (Derek entry removed); #1807 overage reassigned off Nigel (Aaron negligence). | 2026-08-17 re-pull: all 18 budgets/times verified live — two changes: #1965 gained a 195-min entry by Ben (Project Manager acting as a technician; counts toward consumed time and bonus split); #2007 lost Derek's two entries (66 min, corrected off in JobTread — now Nigel only).",
  "year": 2026,
  "month": 7,
  "periodLabel": "July 2026",
@@ -471,6 +471,11 @@
      "Nigel Greenberg"
     ],
     [
+     195,
+     "2026-06-25",
+     "Ben- Project Manager"
+    ],
+    [
      24,
      "2026-07-10",
      "Nigel Greenberg"
@@ -843,16 +848,6 @@
      313,
      "2026-07-16",
      "Nigel Greenberg"
-    ],
-    [
-     15,
-     "2026-07-16",
-     "Derek Erskin"
-    ],
-    [
-     51,
-     "2026-07-16",
-     "Derek Erskin"
     ]
    ]
   }
