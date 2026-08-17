@@ -1,12 +1,7 @@
 {
-  "note": "July 2026 Salesman Commission for Derek (Sales Rep = Derek), pulled live from JobTread on 2026-08-10. Commission = the job's 'Salesman Commission' budget line (cost code 22P8bPrAtCpM), paid when the job is closed AND its approved invoices are fully collected. 'Lead Commission' / team-lead commission (22PaBSbbPWZ8) is a SEPARATE line and is not included here. approvedInvoiced/paid use approved customer invoices only. Rows: [number, name, closedOn, salesmanCommissionLine, approvedInvoicedWithTax, paid].",
-  "year": 2026,
-  "month": 7,
-  "periodLabel": "July 2026",
-  "rep": "Derek",
-  "lineName": "Salesman Commission",
+  "note": "July 2026 Salesman Commission for Derek (Sales Rep = Derek), re-pulled live from JobTread on 2026-08-10 after ownership fixes. Commission = the job's 'Salesman Commission' budget line (22P8bPrAtCpM), payable once the job's approved invoices are fully collected. Lead/Team-Lead Commission (22PaBSbbPWZ8) excluded. Rows: [number, name, closedOn, salesmanCommissionLine, approvedInvoicedWithTax, paid].",
+  "year": 2026, "month": 7, "periodLabel": "July 2026", "rep": "Derek", "lineName": "Salesman Commission",
   "jobs": [
-    ["1986", "electrical Service call", "2026-07-02", 0, 304.98, 304.98],
     ["1987", "Service/Panel Quote", "2026-07-13", 272, 0, 0],
     ["2009", "Fan install", "2026-07-20", 0, 0, 0]
   ]

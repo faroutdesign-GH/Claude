@@ -1,0 +1,9 @@
+{
+  "note": "August 2026 Salesman Commission for Derek (Sales Rep = Derek), pulled live from JobTread on 2026-08-10. PARTIAL MONTH. Commission = the job's 'Salesman Commission' budget line (22P8bPrAtCpM), payable once approved invoices are fully collected. Lead/Team-Lead Commission (22PaBSbbPWZ8) excluded. Rows: [number, name, closedOn, salesmanCommissionLine, approvedInvoicedWithTax, paid].",
+  "year": 2026, "month": 8, "periodLabel": "August 2026 (through 08-10)", "rep": "Derek", "lineName": "Salesman Commission",
+  "jobs": [
+    ["1990", "Mini Split", "2026-08-12", 0, 2850.64, 2850.64],
+    ["1995", "Bathroom Circuit", "2026-08-05", 0, 560.41, 560.41],
+    ["2011", "Ring SC", "2026-08-03", 0, 305.01, 305.01]
+  ]
+}
