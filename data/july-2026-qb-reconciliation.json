@@ -1,0 +1,46 @@
+{
+  "note": "July 2026 reconciliation: QuickBooks 'Sales by Customer Summary' (accrual) vs JobTread approved customer invoices issued in July, pulled live 2026-08-17. QB amounts are pre-tax sales. Ties out to the penny.",
+  "periodLabel": "July 2026",
+  "qbTotal": 43527.66,
+  "jtApprovedTotal": 37969.05,
+  "matched": [
+    ["Alan Laymon", "Bathroom Circuit", 560.41, "1995", "Bathroom Circuit", 560.41, ""],
+    ["Alan Laymon", "Electrical review", 1139.05, "1992", "Service Repair", 1139.05, ""],
+    ["Andy Adams", "Electical punchlist", 3515.00, "1931", "Electical punchlist", 3515.00, ""],
+    ["Bill Milner & Shelli Dunayer", "Lift controller", 856.44, "2047", "Lift controller", 856.44, ""],
+    ["Bob Jacobs- Condo", "TV relocation", 304.88, "1954", "TV relocation", 304.98, "10c difference (QB 304.88 vs JT 304.98)"],
+    ["Cassie Davies", "electrical Service call", 304.98, "1986", "electrical Service call", 304.98, ""],
+    ["Dave Saunders", "landscape fixtures", 1634.94, "1958", "landscape fixtures", 1634.94, ""],
+    ["Flash Gordon", "Pendant lights", 455.37, "1962", "Pendant lights", 455.37, ""],
+    ["Gail Vickers", "KBW  kitchen remodel", 347.89, "1965", "KBW : kitchen remodel", 347.89, ""],
+    ["Greg Kochman", "Lighting install", 4716.33, "1975", "Lighting install", 4716.33, ""],
+    ["James Silver", "inspection report", 391.77, "1988", "inspection report", 391.77, ""],
+    ["Ken Baine", "Baine Remodel", 5817.60, "2040", "Baine Remodel", 5817.60, ""],
+    ["Matt Gilbert", "Water heater relocate", 888.32, "1985", "Water heater relocate", 888.32, ""],
+    ["Max Solon Plumbing", "warehouse remodel electrical", 1872.36, "2018", "Shed remodel electrical", 1872.36, "name differs"],
+    ["Mike collins", "Mini Split", 862.11, "2007", "Mini Split", 862.11, ""],
+    ["Mischele Brisco", "Electrical panel review", 395.00, "2041", "Electrical panel review", 395.00, ""],
+    ["Oakhurst Ace Hardware", "Speaker/sign SC", 444.51, "1993", "Speaker/sign SC", 444.51, ""],
+    ["Ron Brewster", "Panel Replacement", 2204.52, "1998", "Panel Replacement", 2204.52, ""],
+    ["SEA STAR CONDO ASSN INC", "Panel Replacement", 6823.98, "1952", "Panel Replacement", 6823.98, ""],
+    ["Sean O'Neil", "tankless water heater", 1096.40, "1974", "tankless water heater", 1096.40, ""],
+    ["Tanya Danaher", "patio lights (approved part)", 308.21, "2002", "patio lights", 308.21, "QB line is 826.92; 518.71 is a denied invoice (see below)"],
+    ["Tanya Danaher", "Under cabinet lighting", 694.68, "1991", "Under cabinet lighting", 694.68, ""]
+  ],
+  "qbNotInJobtread": [
+    ["Catherine & Ryan Pallas", "Electrical punch list", 2653.84, "No JobTread invoice at any status — invoiced directly in QB, or a JobTread invoice is missing."],
+    ["Jets Pizza", "Electrical wiring clearwater", 2411.07, "No JobTread invoice at any status."],
+    ["Qmerit Customers", "Anissa Westfall 379800", 114.00, "No JobTread invoice — Qmerit fees are often booked directly in QB."]
+  ],
+  "qbNotApprovedInJobtread": [
+    ["Bob McJennett", "Punchlist", 722.20, "1980", "Light & Audio equipment", "denied"],
+    ["Tanya Danaher", "patio lights (extra part)", 518.71, "2002", "patio lights", "denied (the QB line totals 826.92; 308.21 is approved above)"],
+    ["Amish Country Stores", "Storage Room Lighting", 253.13, "1984", "Storage Room Lighting", "pending"],
+    ["Yorktown at Beacon Place", "credentials", 724.45, "2046", "credentials", "denied"],
+    ["Kitchens By Wheaton", "Horwood Project", 190.50, "1866", "Horwood Project", "pending"],
+    ["Lea Martin", "Service request", 305.01, "2010", "Service request", "pending"]
+  ],
+  "jobtreadNotInQb": [
+    ["1796", "Kitchen Circuits", 2334.20, "Approved & issued 2026-07-07 in JobTread, but not on the QB July sales report — verify it posted to QuickBooks."]
+  ]
+}
