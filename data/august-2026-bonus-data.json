@@ -1,0 +1,1395 @@
+{
+ "note": "August 2026 efficiency-bonus snapshot pulled live from JobTread on 2026-09-14. Bid = job-budget APPROVED time only (Labor + hour-denominated Travel bonded to an approved document). items = [quantity, 'L'|'T', 'H'|null, approved]. tes = [minutes, date, user]. Self-contained: includes number/name/closedOn. Ben (Project Manager) counted as a technician per ownership direction (same as July).",
+ "year": 2026,
+ "month": 8,
+ "periodLabel": "August 2026",
+ "bonusDetails": [
+  {
+   "id": "22PRT6zVLhXF",
+   "number": "1735",
+   "name": "Dock Electrical",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     10,
+     "L",
+     "H",
+     true
+    ],
+    [
+     26,
+     "T",
+     null,
+     true
+    ],
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     26,
+     "T",
+     null,
+     true
+    ],
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     286,
+     "2026-02-17",
+     "Aaron Motta"
+    ],
+    [
+     31,
+     "2026-07-10",
+     "Derek Erskin"
+    ],
+    [
+     86,
+     "2026-07-10",
+     "Derek Erskin"
+    ],
+    [
+     33,
+     "2026-07-28",
+     "Derek Erskin"
+    ],
+    [
+     456,
+     "2026-07-28",
+     "Derek Erskin"
+    ],
+    [
+     24,
+     "2026-07-28",
+     "Nigel Greenberg"
+    ],
+    [
+     359,
+     "2026-07-28",
+     "Nigel Greenberg"
+    ],
+    [
+     0,
+     "2026-07-28",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PSLLjWN4Ja",
+   "number": "1754",
+   "name": "Rinku Datta EVcharger",
+   "closedOn": "2026-08-10",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     128,
+     "T",
+     null,
+     true
+    ]
+   ],
+   "tes": [
+    [
+     14,
+     "2026-02-27",
+     "Aaron Motta"
+    ],
+    [
+     69,
+     "2026-02-27",
+     "Aaron Motta"
+    ],
+    [
+     227,
+     "2026-02-27",
+     "Aaron Motta"
+    ]
+   ]
+  },
+  {
+   "id": "22PTryTcdSRZ",
+   "number": "1796",
+   "name": "Kitchen Circuits",
+   "closedOn": "2026-08-17",
+   "items": [
+    [
+     10,
+     "L",
+     "H",
+     true
+    ],
+    [
+     23,
+     "T",
+     null,
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     0.5,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     15,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     10,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     17,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     20,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     45,
+     "2026-07-14",
+     "Derek Erskin"
+    ],
+    [
+     43,
+     "2026-07-14",
+     "Nigel Greenberg"
+    ],
+    [
+     465,
+     "2026-07-14",
+     "Nigel Greenberg"
+    ],
+    [
+     465,
+     "2026-07-14",
+     "Derek Erskin"
+    ],
+    [
+     136,
+     "2026-07-21",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PULNPrVUfN",
+   "number": "1811",
+   "name": "Eric Nelsestuen EV repair",
+   "closedOn": "2026-08-17",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     2,
+     "L",
+     "H",
+     true
+    ],
+    [
+     2,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     132,
+     "2026-04-06",
+     "Aaron Motta"
+    ],
+    [
+     58,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ],
+    [
+     45,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ],
+    [
+     79,
+     "2026-06-09",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYmSqSBV3x",
+   "number": "1925",
+   "name": "Jesus Almaguer EVC",
+   "closedOn": "2026-08-07",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     2,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     59,
+     "2026-06-15",
+     "Nigel Greenberg"
+    ],
+    [
+     78,
+     "2026-06-15",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYmX4XySE3",
+   "number": "1927",
+   "name": "Service Upgrade",
+   "closedOn": "2026-08-12",
+   "items": [
+    [
+     8,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     18,
+     "2026-06-18",
+     "Nigel Greenberg"
+    ],
+    [
+     408,
+     "2026-06-18",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PYtvZcm8b8",
+   "number": "1931",
+   "name": "Electical punchlist",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     22,
+     "L",
+     null,
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     10,
+     "2026-07-21",
+     "Derek Erskin"
+    ],
+    [
+     8,
+     "2026-07-21",
+     "Nigel Greenberg"
+    ],
+    [
+     480,
+     "2026-07-21",
+     "Nigel Greenberg"
+    ],
+    [
+     289,
+     "2026-07-21",
+     "Derek Erskin"
+    ],
+    [
+     379,
+     "2026-07-23",
+     "Nigel Greenberg"
+    ],
+    [
+     27,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     0,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     192,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     85,
+     "2026-07-24",
+     "Nigel Greenberg"
+    ],
+    [
+     6,
+     "2026-07-28",
+     "Nigel Greenberg"
+    ],
+    [
+     88,
+     "2026-07-28",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZKBqKf6m6",
+   "number": "1954",
+   "name": "TV relocation",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     21,
+     "2026-06-19",
+     "Nigel Greenberg"
+    ],
+    [
+     89,
+     "2026-06-19",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PZQeWXhMW4",
+   "number": "1958",
+   "name": "landscape fixtures",
+   "closedOn": "2026-08-05",
+   "items": [
+    [
+     1.5,
+     "T",
+     "H",
+     true
+    ],
+    [
+     18,
+     "L",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     29,
+     "2026-07-09",
+     "Nigel Greenberg"
+    ],
+    [
+     51,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     332,
+     "2026-07-09",
+     "Nigel Greenberg"
+    ],
+    [
+     242,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     38,
+     "2026-07-24",
+     "Derek Erskin"
+    ],
+    [
+     219,
+     "2026-07-24",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PZqS82YzGK",
+   "number": "1974",
+   "name": "tankless water heater",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     85,
+     "2026-07-17",
+     "Ben- Project Manager"
+    ]
+   ]
+  },
+  {
+   "id": "22Pa5fDxKjjp",
+   "number": "1984",
+   "name": "Storage Room Lighting",
+   "closedOn": "2026-08-17",
+   "items": [
+    [
+     1,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     16,
+     "2026-07-09",
+     "Derek Erskin"
+    ],
+    [
+     57,
+     "2026-07-09",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaBgpqNrBP",
+   "number": "1990",
+   "name": "Mini Split",
+   "closedOn": "2026-08-12",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     true
+    ],
+    [
+     12,
+     "L",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ],
+    [
+     12,
+     "L",
+     "H",
+     false
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     1,
+     "T",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     26,
+     "2026-07-15",
+     "Derek Erskin"
+    ],
+    [
+     109,
+     "2026-07-15",
+     "Derek Erskin"
+    ],
+    [
+     71,
+     "2026-08-07",
+     "Derek Erskin"
+    ],
+    [
+     219,
+     "2026-08-07",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaBtvZygaq",
+   "number": "1991",
+   "name": "Under cabinet lighting",
+   "closedOn": "2026-08-12",
+   "items": [
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.15,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     7,
+     "2026-07-06",
+     "Nigel Greenberg"
+    ],
+    [
+     153,
+     "2026-07-06",
+     "Nigel Greenberg"
+    ],
+    [
+     6,
+     "2026-07-06",
+     "Nigel Greenberg"
+    ],
+    [
+     6,
+     "2026-08-10",
+     "Derek Erskin"
+    ],
+    [
+     23,
+     "2026-08-10",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaEpKpFWPb",
+   "number": "1993",
+   "name": "Speaker/sign SC",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     1,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     2,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     28,
+     "2026-06-26",
+     "Nigel Greenberg"
+    ],
+    [
+     14,
+     "2026-07-03",
+     "Derek Erskin"
+    ],
+    [
+     6,
+     "2026-07-03",
+     "Derek Erskin"
+    ],
+    [
+     110,
+     "2026-07-07",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PaQLVVSJx2",
+   "number": "1995",
+   "name": "Bathroom Circuit",
+   "closedOn": "2026-08-05",
+   "items": [
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     210,
+     "2026-08-04",
+     "Derek Erskin"
+    ],
+    [
+     23,
+     "2026-08-04",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaR5rRU2HD",
+   "number": "1998",
+   "name": "Panel Replacement",
+   "closedOn": "2026-08-10",
+   "items": [
+    [
+     9,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.21,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     10,
+     "2026-07-22",
+     "Nigel Greenberg"
+    ],
+    [
+     3,
+     "2026-07-22",
+     "Derek Erskin"
+    ],
+    [
+     399,
+     "2026-07-22",
+     "Nigel Greenberg"
+    ],
+    [
+     107,
+     "2026-07-22",
+     "Derek Erskin"
+    ],
+    [
+     71,
+     "2026-07-22",
+     "Derek Erskin"
+    ],
+    [
+     0,
+     "2026-07-22",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaXJxjxe7C",
+   "number": "2005",
+   "name": "Ring SC",
+   "closedOn": "2026-08-11",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ],
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     9,
+     "2026-07-08",
+     "Nigel Greenberg"
+    ],
+    [
+     59,
+     "2026-07-08",
+     "Nigel Greenberg"
+    ],
+    [
+     10,
+     "2026-08-03",
+     "Derek Erskin"
+    ],
+    [
+     153,
+     "2026-08-03",
+     "Derek Erskin"
+    ],
+    [
+     43,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ],
+    [
+     32,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PadXuagyDK",
+   "number": "2011",
+   "name": "Ring SC",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     1.663,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.251,
+     "T",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     25,
+     "2026-07-10",
+     "Derek Erskin"
+    ],
+    [
+     73,
+     "2026-07-10",
+     "Derek Erskin"
+    ],
+    [
+     21,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     47,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     18,
+     "2026-07-23",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PaeBGVKFGs",
+   "number": "2012",
+   "name": "Recessed lighting",
+   "closedOn": "2026-08-20",
+   "items": [
+    [
+     1,
+     "T",
+     "H",
+     true
+    ],
+    [
+     9,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     26,
+     "2026-08-03",
+     "Nigel Greenberg"
+    ],
+    [
+     445,
+     "2026-08-03",
+     "Nigel Greenberg"
+    ],
+    [
+     21,
+     "2026-08-03",
+     "Derek Erskin"
+    ],
+    [
+     62,
+     "2026-08-03",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22Pat5L2amRM",
+   "number": "2021",
+   "name": "Fan/Dimmer wiring",
+   "closedOn": "2026-08-05",
+   "items": [
+    [
+     3.5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     28,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ],
+    [
+     65,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PazmqUcXrU",
+   "number": "2026",
+   "name": "Garage Camera add",
+   "closedOn": "2026-08-18",
+   "items": [
+    [
+     6,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     75,
+     "2026-08-13",
+     "Curtice Jarvis"
+    ],
+    [
+     75,
+     "2026-08-13",
+     "Derek Erskin"
+    ],
+    [
+     125,
+     "2026-08-13",
+     "Curtice Jarvis"
+    ],
+    [
+     125,
+     "2026-08-13",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PbHiG7vCtT",
+   "number": "2035",
+   "name": "Garage",
+   "closedOn": "2026-08-06",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ],
+    [
+     6,
+     "L",
+     "H",
+     false
+    ],
+    [
+     1,
+     "T",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     18,
+     "2026-07-29",
+     "Nigel Greenberg"
+    ],
+    [
+     212,
+     "2026-07-29",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PbNQDnRsD8",
+   "number": "2038",
+   "name": "Call pump diagnostics",
+   "closedOn": "2026-08-31",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     8,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     11,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     75,
+     "2026-07-23",
+     "Derek Erskin"
+    ],
+    [
+     59,
+     "2026-07-23",
+     "Curtice Jarvis"
+    ],
+    [
+     7,
+     "2026-08-06",
+     "Curtice Jarvis"
+    ],
+    [
+     87,
+     "2026-08-06",
+     "Curtice Jarvis"
+    ],
+    [
+     16,
+     "2026-08-06",
+     "Curtice Jarvis"
+    ],
+    [
+     175,
+     "2026-08-12",
+     "Curtice Jarvis"
+    ],
+    [
+     43,
+     "2026-08-14",
+     "Curtice Jarvis"
+    ]
+   ]
+  },
+  {
+   "id": "22PbUDQWUMQZ",
+   "number": "2041",
+   "name": "Electrical panel review",
+   "closedOn": "2026-08-03",
+   "items": [
+    [
+     2,
+     "L",
+     "H",
+     true
+    ]
+   ],
+   "tes": []
+  },
+  {
+   "id": "22PbkfbvDRKv",
+   "number": "2047",
+   "name": "Lift controller",
+   "closedOn": "2026-08-17",
+   "items": [
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     40,
+     "2026-08-14",
+     "Derek Erskin"
+    ],
+    [
+     128,
+     "2026-08-14",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22Pc4t74RK9X",
+   "number": "2057",
+   "name": "Patio TV breaker",
+   "closedOn": "2026-08-10",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ]
+   ],
+   "tes": [
+    [
+     55,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ],
+    [
+     58,
+     "2026-08-04",
+     "Nigel Greenberg"
+    ]
+   ]
+  },
+  {
+   "id": "22PcJ35kbM7C",
+   "number": "2065",
+   "name": "Martin - Electrical Upgrades",
+   "closedOn": "2026-08-31",
+   "items": [
+    [
+     4,
+     "L",
+     "H",
+     true
+    ],
+    [
+     null,
+     "L",
+     null,
+     true
+    ],
+    [
+     1,
+     "T",
+     "H",
+     true
+    ],
+    [
+     8,
+     "L",
+     "H",
+     false
+    ],
+    [
+     4,
+     "L",
+     "H",
+     false
+    ],
+    [
+     1,
+     "T",
+     "H",
+     false
+    ],
+    [
+     0,
+     "L",
+     "H",
+     false
+    ]
+   ],
+   "tes": [
+    [
+     34,
+     "2026-08-21",
+     "Derek Erskin"
+    ],
+    [
+     127,
+     "2026-08-21",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PcJQmxZhas",
+   "number": "2067",
+   "name": "Ring camera installation",
+   "closedOn": "2026-08-17",
+   "items": [
+    [
+     5.5,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.3,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     23,
+     "2026-08-17",
+     "Derek Erskin"
+    ],
+    [
+     10,
+     "2026-08-17",
+     "Derek Erskin"
+    ],
+    [
+     243,
+     "2026-08-17",
+     "Derek Erskin"
+    ]
+   ]
+  },
+  {
+   "id": "22PcsgkGTJ86",
+   "number": "2080",
+   "name": "Booster Pump",
+   "closedOn": "2026-08-31",
+   "items": [
+    [
+     null,
+     "L",
+     null,
+     false
+    ],
+    [
+     3,
+     "L",
+     "H",
+     true
+    ],
+    [
+     0.5,
+     "T",
+     "H",
+     true
+    ]
+   ],
+   "tes": [
+    [
+     14,
+     "2026-08-17",
+     "Derek Erskin"
+    ],
+    [
+     63,
+     "2026-08-17",
+     "Derek Erskin"
+    ]
+   ]
+  }
+ ]
+}
