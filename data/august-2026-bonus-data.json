@@ -1,5 +1,5 @@
 {
- "note": "August 2026 efficiency-bonus snapshot pulled live from JobTread on 2026-09-14. Bid = job-budget APPROVED time only (Labor + hour-denominated Travel bonded to an approved document). items = [quantity, 'L'|'T', 'H'|null, approved]. tes = [minutes, date, user]. Self-contained: includes number/name/closedOn. Ben (Project Manager) counted as a technician per ownership direction (same as July).",
+ "note": "August 2026 efficiency-bonus snapshot pulled live from JobTread on 2026-09-14, re-pulled 2026-09-17. Bid = job-budget APPROVED time only (Labor + hour-denominated Travel bonded to an approved document). items = [quantity, 'L'|'T', 'H'|null, approved]. tes = [minutes, date, user]. Self-contained: includes number/name/closedOn. Ben (Project Manager) counted as a technician per ownership direction (same as July). | 2026-09-17 re-pull: all 29 budgets unchanged; two time-entry additions — #1958 +47min Curtice on 2026-08-20 (after close -> warranty), #1990 +162min Ben on 2026-08-07 (before close -> joins regular split).",
  "year": 2026,
  "month": 8,
  "periodLabel": "August 2026",
@@ -494,6 +494,11 @@
      219,
      "2026-07-24",
      "Derek Erskin"
+    ],
+    [
+     47,
+     "2026-08-20",
+     "Curtice Jarvis"
     ]
    ]
   },
@@ -632,6 +637,11 @@
      71,
      "2026-08-07",
      "Derek Erskin"
+    ],
+    [
+     162,
+     "2026-08-07",
+     "Ben- Project Manager"
     ],
     [
      219,
