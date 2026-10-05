@@ -27,7 +27,8 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-he
 .hbtn:hover{color:var(--text)}
 .main{padding:20px 28px;display:flex;flex-direction:column;gap:14px;max-width:1400px;margin:0 auto}
 .stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:all .15s}
+.stat:hover{background:var(--surface2);border-color:var(--border2)}
 .sl{font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
 .sv{font-size:24px;font-weight:800;letter-spacing:-.03em}
 .ss{font-family:DM Mono,monospace;font-size:10px;margin-top:3px}
@@ -165,7 +166,7 @@ body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="panel">
     <div class="ph">
       <div class="pt"><div class="pdot" style="background:var(--const)"></div>All open jobs — live status</div>
-      <div style="display:flex;gap:6px" id="ftabs"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="ftabs"></div>
     </div>
     <div style="padding:8px 18px;display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto" id="jlist"></div>
   </div>
@@ -255,15 +256,15 @@ document.getElementById('updated').textContent=NOW.toLocaleTimeString('en-US',{h
 
 // STAT ROW
 const STATS=[
-  {label:'Open jobs',value:JOBS.length,color:'var(--text)',sub:`${createdToday.length} added today`},
-  {label:'Final balance due',value:balanceDue.length,color:'var(--closure)',sub:'work done · unpaid'},
-  {label:'Awaiting schedule',value:awaitSched.length,color:'var(--warn)',sub:'job acknowledge'},
-  {label:'Active permits',value:activePermits.length,color:'var(--acct)',sub:'applied or active'},
-  {label:'Follow up needed',value:followUp.length,color:'var(--danger)',sub:'issue flag active'},
-  {label:'New this week',value:createdThisWeek.length,color:'var(--ok)',sub:'jobs created'}
+  {label:'Open jobs',value:JOBS.length,color:'var(--text)',sub:`${createdToday.length} added today`,filterKey:'all'},
+  {label:'Final balance due',value:balanceDue.length,color:'var(--closure)',sub:'work done · unpaid',filterKey:'balance'},
+  {label:'Awaiting schedule',value:awaitSched.length,color:'var(--warn)',sub:'job acknowledge',filterKey:'schedule'},
+  {label:'Active permits',value:activePermits.length,color:'var(--acct)',sub:'applied or active',filterKey:'permit'},
+  {label:'Follow up needed',value:followUp.length,color:'var(--danger)',sub:'issue flag active',filterKey:'followup'},
+  {label:'New this week',value:createdThisWeek.length,color:'var(--ok)',sub:'jobs created',filterKey:'newweek'}
 ];
 document.getElementById('stat-row').innerHTML=STATS.map(s=>
-  `<div class="stat"><div class="sl">${s.label}</div><div class="sv" style="color:${s.color}">${s.value}</div><div class="ss" style="color:var(--muted)">${s.sub}</div></div>`
+  `<div class="stat" title="View these jobs" onclick="jumpToFilter('${s.filterKey}')"><div class="sl">${s.label}</div><div class="sv" style="color:${s.color}">${s.value}</div><div class="ss" style="color:var(--muted)">${s.sub}</div></div>`
 ).join('');
 
 // PIPELINE COMPOSITION — real counts as a share of the 55 open jobs (no fabricated history)
@@ -350,6 +351,8 @@ function renderJobs(filter){
   if(filter==='balance') jobs=balanceDue;
   if(filter==='schedule') jobs=awaitSched;
   if(filter==='permit') jobs=activePermits;
+  if(filter==='followup') jobs=followUp;
+  if(filter==='newweek') jobs=createdThisWeek;
   if(filter==='ben') jobs=JOBS.filter(j=>j.salesRep==='Ben');
   if(filter==='curtice') jobs=JOBS.filter(j=>j.salesRep==='Curtice');
   if(filter==='derek') jobs=JOBS.filter(j=>j.salesRep==='Derek');
@@ -385,12 +388,14 @@ const TABS=[
   {key:'balance',label:`Balance due (${balanceDue.length})`},
   {key:'schedule',label:`To schedule (${awaitSched.length})`},
   {key:'permit',label:`Permits (${activePermits.length})`},
+  {key:'followup',label:`Follow up (${followUp.length})`},
+  {key:'newweek',label:`New this week (${createdThisWeek.length})`},
   {key:'ben',label:'Ben'},
   {key:'curtice',label:'Curtice'},
   {key:'derek',label:'Derek'}
 ];
 document.getElementById('ftabs').innerHTML=TABS.map((t,i)=>
-  `<button class="hbtn" style="${i===0?"background:var(--surface);color:var(--text)":''}" onclick="filterJobs('${t.key}',this)">${t.label}</button>`
+  `<button class="hbtn" data-key="${t.key}" style="${i===0?"background:var(--surface);color:var(--text)":''}" onclick="filterJobs('${t.key}',this)">${t.label}</button>`
 ).join('');
 renderJobs('all');
 
@@ -398,6 +403,14 @@ function filterJobs(f,el){
   document.querySelectorAll('#ftabs .hbtn').forEach(b=>{b.style.background='';b.style.color='var(--muted)'});
   el.style.background='var(--surface)';el.style.color='var(--text)';
   renderJobs(f);
+}
+
+// Clicking a top stat card jumps to and filters the jobs table below
+function jumpToFilter(key){
+  const btn=document.querySelector(`#ftabs .hbtn[data-key="${key}"]`);
+  if(btn) filterJobs(key,btn);
+  const panel=document.getElementById('jlist').closest('.panel');
+  if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // BRIEFING — prompt is built from the live filtered arrays above, not a hardcoded narrative
